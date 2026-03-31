@@ -1,0 +1,820 @@
+Height tracker code: 
+import { useState, useMemo } from “react”;
+const HEIDI_HEIGHT_INCHES = 70.5;
+const toInches = (ft, ins) => ft * 12 + parseFloat(ins || 0);
+const formatHeight = (total) => {
+const ft = Math.floor(total / 12);
+const ins = total % 12;
+return `${ft}′ ${ins % 1 === 0 ? ins : ins.toFixed(1)}″`;
+};
+const CELEBS = [
+// ── CLASSIC HOLLYWOOD ACTORS ──
+{ id: 1, name: “Cary Grant”, height: 73, bio: “Classic Hollywood leading man” },
+{ id: 2, name: “Humphrey Bogart”, height: 70, bio: “Actor (Casablanca, The Maltese Falcon)” },
+{ id: 3, name: “James Dean”, height: 70, bio: “Iconic rebel actor (Rebel Without a Cause)” },
+{ id: 4, name: “Marlon Brando”, height: 70, bio: “Actor (The Godfather, A Streetcar Named Desire)” },
+{ id: 5, name: “Paul Newman”, height: 71, bio: “Oscar-winning actor (The Color of Money)” },
+{ id: 6, name: “Steve McQueen”, height: 70, bio: “King of Cool, actor (Bullitt)” },
+{ id: 7, name: “Jack Nicholson”, height: 70, bio: “Oscar-winning actor (One Flew Over the Cuckoo’s Nest)” },
+{ id: 8, name: “Robert De Niro”, height: 69, bio: “Oscar-winning actor (Raging Bull, Godfather II)” },
+{ id: 9, name: “Al Pacino”, height: 67, bio: “Actor (Scarface, The Godfather)” },
+{ id: 10, name: “Dustin Hoffman”, height: 66, bio: “Oscar-winning actor (Rain Man, Tootsie)” },
+{ id: 11, name: “Gene Hackman”, height: 72, bio: “Oscar-winning actor (The French Connection)” },
+{ id: 12, name: “Sidney Poitier”, height: 74, bio: “First Black Oscar winner for leading role” },
+{ id: 13, name: “Gregory Peck”, height: 75, bio: “Actor (To Kill a Mockingbird)” },
+{ id: 14, name: “Spencer Tracy”, height: 70, bio: “Two-time Oscar-winning actor” },
+{ id: 15, name: “Kirk Douglas”, height: 71, bio: “Actor (Spartacus)” },
+{ id: 16, name: “Burt Lancaster”, height: 74, bio: “Oscar-winning actor (Elmer Gantry)” },
+{ id: 17, name: “Charlton Heston”, height: 75, bio: “Actor (Ben-Hur, The Ten Commandments)” },
+{ id: 18, name: “William Holden”, height: 72, bio: “Oscar-winning actor (Stalag 17)” },
+{ id: 19, name: “James Stewart”, height: 75, bio: “Actor (It’s a Wonderful Life)” },
+{ id: 20, name: “Henry Fonda”, height: 74, bio: “Actor (12 Angry Men, On Golden Pond)” },
+{ id: 21, name: “Clark Gable”, height: 73, bio: “King of Hollywood (Gone with the Wind)” },
+{ id: 22, name: “Robert Mitchum”, height: 73, bio: “Actor (Cape Fear, Night of the Hunter)” },
+{ id: 23, name: “Yul Brynner”, height: 70, bio: “Oscar-winning actor (The King and I)” },
+{ id: 24, name: “Orson Welles”, height: 75, bio: “Actor/director (Citizen Kane)” },
+{ id: 25, name: “Peter Sellers”, height: 70, bio: “Actor (Dr. Strangelove, Pink Panther)” },
+// ── CLASSIC HOLLYWOOD ACTRESSES ──
+{ id: 26, name: “Audrey Hepburn”, height: 67, bio: “Oscar-winning actress (Roman Holiday)” },
+{ id: 27, name: “Katharine Hepburn”, height: 68, bio: “Four-time Oscar-winning actress” },
+{ id: 28, name: “Marilyn Monroe”, height: 65, bio: “Iconic actress & pop culture legend” },
+{ id: 29, name: “Grace Kelly”, height: 67, bio: “Oscar-winning actress turned Princess” },
+{ id: 30, name: “Bette Davis”, height: 63, bio: “Two-time Oscar-winning actress” },
+{ id: 31, name: “Joan Crawford”, height: 65, bio: “Oscar-winning actress (Mildred Pierce)” },
+{ id: 32, name: “Elizabeth Taylor”, height: 64, bio: “Two-time Oscar-winning actress” },
+{ id: 33, name: “Ingrid Bergman”, height: 68, bio: “Oscar-winning actress (Casablanca)” },
+{ id: 34, name: “Vivien Leigh”, height: 65, bio: “Oscar-winning actress (Gone with the Wind)” },
+{ id: 35, name: “Sophia Loren”, height: 68, bio: “Oscar-winning Italian actress” },
+{ id: 36, name: “Doris Day”, height: 65, bio: “Actress & singer (Pillow Talk)” },
+{ id: 37, name: “Lauren Bacall”, height: 67, bio: “Actress (To Have and Have Not)” },
+{ id: 38, name: “Rita Hayworth”, height: 65, bio: “Actress (Gilda)” },
+{ id: 39, name: “Ava Gardner”, height: 66, bio: “Actress (The Killers)” },
+{ id: 40, name: “Natalie Wood”, height: 62, bio: “Actress (West Side Story, Rebel Without a Cause)” },
+// ── OSCAR-WINNING MODERN ACTORS ──
+{ id: 41, name: “Clint Eastwood”, height: 74, bio: “Oscar-winning actor/director (Unforgiven)” },
+{ id: 42, name: “Denzel Washington”, height: 71, bio: “Two-time Oscar-winning actor” },
+{ id: 43, name: “Tom Hanks”, height: 72, bio: “Two-time Oscar-winning actor (Forrest Gump)” },
+{ id: 44, name: “Anthony Hopkins”, height: 69, bio: “Oscar-winning actor (Silence of the Lambs)” },
+{ id: 45, name: “Daniel Day-Lewis”, height: 72, bio: “Three-time Oscar-winning actor” },
+{ id: 46, name: “Sean Penn”, height: 69, bio: “Two-time Oscar-winning actor” },
+{ id: 47, name: “Russell Crowe”, height: 72, bio: “Oscar-winning actor (Gladiator)” },
+{ id: 48, name: “Geoffrey Rush”, height: 71, bio: “Oscar-winning actor (Shine)” },
+{ id: 49, name: “Kevin Spacey”, height: 70, bio: “Two-time Oscar-winning actor” },
+{ id: 50, name: “Morgan Freeman”, height: 73, bio: “Oscar-winning actor (Million Dollar Baby)” },
+{ id: 51, name: “Gene Wilder”, height: 71, bio: “Actor (Willy Wonka, Young Frankenstein)” },
+{ id: 52, name: “Dustin Hoffman”, height: 66, bio: “Oscar-winning actor (Kramer vs. Kramer)” },
+{ id: 53, name: “Jon Voight”, height: 74, bio: “Oscar-winning actor (Coming Home)” },
+{ id: 54, name: “Forest Whitaker”, height: 74, bio: “Oscar-winning actor (The Last King of Scotland)” },
+{ id: 55, name: “Adrian Brody”, height: 73, bio: “Oscar-winning actor (The Pianist)” },
+{ id: 56, name: “Jamie Foxx”, height: 69, bio: “Oscar-winning actor (Ray)” },
+{ id: 57, name: “Philip Seymour Hoffman”,height: 70, bio: “Oscar-winning actor (Capote)” },
+{ id: 58, name: “Jeff Bridges”, height: 74, bio: “Oscar-winning actor (Crazy Heart)” },
+{ id: 59, name: “Colin Firth”, height: 73, bio: “Oscar-winning actor (The King’s Speech)” },
+{ id: 60, name: “Eddie Redmayne”, height: 71, bio: “Oscar-winning actor (The Theory of Everything)” },
+// ── OSCAR-WINNING MODERN ACTRESSES ──
+{ id: 61, name: “Meryl Streep”, height: 65, bio: “Three-time Oscar-winning actress” },
+{ id: 62, name: “Cate Blanchett”, height: 69, bio: “Two-time Oscar-winning actress” },
+{ id: 63, name: “Jodie Foster”, height: 65, bio: “Two-time Oscar-winning actress” },
+{ id: 64, name: “Hilary Swank”, height: 67, bio: “Two-time Oscar-winning actress” },
+{ id: 65, name: “Charlize Theron”, height: 71, bio: “Oscar-winning actress (Monster)” },
+{ id: 66, name: “Halle Berry”, height: 65, bio: “Oscar-winning actress (Monster’s Ball)” },
+{ id: 67, name: “Nicole Kidman”, height: 71, bio: “Oscar-winning actress (The Hours)” },
+{ id: 68, name: “Reese Witherspoon”, height: 63, bio: “Oscar-winning actress (Walk the Line)” },
+{ id: 69, name: “Julia Roberts”, height: 67, bio: “Oscar-winning actress (Erin Brockovich)” },
+{ id: 70, name: “Sandra Bullock”, height: 68, bio: “Oscar-winning actress (The Blind Side)” },
+{ id: 71, name: “Susan Sarandon”, height: 67, bio: “Oscar-winning actress (Dead Man Walking)” },
+{ id: 72, name: “Gwyneth Paltrow”, height: 69, bio: “Oscar-winning actress (Shakespeare in Love)” },
+{ id: 73, name: “Natalie Portman”, height: 64, bio: “Oscar-winning actress (Black Swan)” },
+{ id: 74, name: “Kathy Bates”, height: 63, bio: “Oscar-winning actress (Misery)” },
+{ id: 75, name: “Helen Hunt”, height: 64, bio: “Oscar-winning actress (As Good as It Gets)” },
+{ id: 76, name: “Helen Mirren”, height: 64, bio: “Oscar-winning actress (The Queen)” },
+{ id: 77, name: “Kate Winslet”, height: 67, bio: “Oscar-winning actress (The Reader)” },
+{ id: 78, name: “Penélope Cruz”, height: 65, bio: “Oscar-winning actress (Vicky Cristina Barcelona)” },
+{ id: 79, name: “Marion Cotillard”, height: 65, bio: “Oscar-winning actress (La Vie en Rose)” },
+{ id: 80, name: “Jennifer Lawrence”, height: 67, bio: “Oscar-winning actress (Silver Linings Playbook)” },
+// ── CULT CLASSIC ACTORS ──
+{ id: 81, name: “Bruce Lee”, height: 67, bio: “Martial arts legend (Enter the Dragon)” },
+{ id: 82, name: “Clint Eastwood”, height: 74, bio: “Spaghetti Western icon” },
+{ id: 83, name: “Bruce Willis”, height: 72, bio: “Actor (Die Hard, Pulp Fiction)” },
+{ id: 84, name: “Arnold Schwarzenegger”, height: 74, bio: “Actor (The Terminator, Predator)” },
+{ id: 85, name: “Sylvester Stallone”, height: 70, bio: “Actor (Rocky, Rambo)” },
+{ id: 86, name: “Kurt Russell”, height: 70, bio: “Cult actor (Escape from New York, The Thing)” },
+{ id: 87, name: “John Travolta”, height: 73, bio: “Actor (Pulp Fiction, Saturday Night Fever)” },
+{ id: 88, name: “Samuel L. Jackson”, height: 72, bio: “Actor (Pulp Fiction, Jackie Brown)” },
+{ id: 89, name: “Bill Murray”, height: 73, bio: “Actor (Ghostbusters, Lost in Translation)” },
+{ id: 90, name: “John Cusack”, height: 73, bio: “Actor (Say Anything, Grosse Pointe Blank)” },
+{ id: 91, name: “Jeff Goldblum”, height: 76, bio: “Actor (The Fly, Jurassic Park)” },
+{ id: 92, name: “Tim Curry”, height: 70, bio: “Actor (The Rocky Horror Picture Show)” },
+{ id: 93, name: “Christopher Walken”, height: 72, bio: “Actor (The Deer Hunter, Pulp Fiction)” },
+{ id: 94, name: “Harvey Keitel”, height: 69, bio: “Actor (Reservoir Dogs, Mean Streets)” },
+{ id: 95, name: “Gary Oldman”, height: 69, bio: “Actor (Leon: The Professional, Dracula)” },
+{ id: 96, name: “Dennis Hopper”, height: 70, bio: “Actor (Easy Rider, Blue Velvet)” },
+{ id: 97, name: “Steve Buscemi”, height: 69, bio: “Actor (Reservoir Dogs, Fargo)” },
+{ id: 98, name: “Tim Roth”, height: 67, bio: “Actor (Reservoir Dogs, Rob Roy)” },
+{ id: 99, name: “Michael Madsen”, height: 73, bio: “Actor (Reservoir Dogs, Kill Bill)” },
+{ id: 100, name: “Benicio del Toro”, height: 73, bio: “Actor (Traffic, Fear and Loathing)” },
+{ id: 101, name: “Vincent Price”, height: 76, bio: “Horror icon (House of Wax, Edward Scissorhands)” },
+{ id: 102, name: “Christopher Lee”, height: 77, bio: “Horror & fantasy icon (Dracula, LOTR)” },
+{ id: 103, name: “Peter Cushing”, height: 72, bio: “Horror icon (Dracula, Star Wars)” },
+{ id: 104, name: “Boris Karloff”, height: 75, bio: “Horror legend (Frankenstein, The Mummy)” },
+{ id: 105, name: “Bela Lugosi”, height: 73, bio: “Horror legend (Dracula)” },
+// ── TV ACTORS & ACTRESSES ──
+{ id: 106, name: “Bryan Cranston”, height: 71, bio: “Actor (Breaking Bad, Malcolm in the Middle)” },
+{ id: 107, name: “James Gandolfini”, height: 72, bio: “Actor (The Sopranos)” },
+{ id: 108, name: “David Duchovny”, height: 74, bio: “Actor (The X-Files)” },
+{ id: 109, name: “Gillian Anderson”, height: 63, bio: “Actress (The X-Files, The Crown)” },
+{ id: 110, name: “Jerry Seinfeld”, height: 71, bio: “Comedian/actor (Seinfeld)” },
+{ id: 111, name: “Jason Alexander”, height: 66, bio: “Actor (Seinfeld)” },
+{ id: 112, name: “Michael Richards”, height: 76, bio: “Actor (Seinfeld — Kramer)” },
+{ id: 113, name: “Julia Louis-Dreyfus”, height: 64, bio: “Actress (Seinfeld, Veep)” },
+{ id: 114, name: “Ted Danson”, height: 74, bio: “Actor (Cheers, The Good Place)” },
+{ id: 115, name: “Kelsey Grammer”, height: 73, bio: “Actor (Frasier, Cheers)” },
+{ id: 116, name: “David Hyde Pierce”, height: 71, bio: “Actor (Frasier)” },
+{ id: 117, name: “Matthew Perry”, height: 72, bio: “Actor (Friends — Chandler Bing)” },
+{ id: 118, name: “Matt LeBlanc”, height: 71, bio: “Actor (Friends — Joey Tribbiani)” },
+{ id: 119, name: “David Schwimmer”, height: 74, bio: “Actor (Friends — Ross Geller)” },
+{ id: 120, name: “Jennifer Aniston”, height: 65, bio: “Actress (Friends — Rachel Green)” },
+{ id: 121, name: “Courteney Cox”, height: 65, bio: “Actress (Friends — Monica Geller)” },
+{ id: 122, name: “Lisa Kudrow”, height: 67, bio: “Actress (Friends — Phoebe Buffay)” },
+{ id: 123, name: “Tony Shalhoub”, height: 68, bio: “Actor (Monk, Wings)” },
+{ id: 124, name: “Hugh Laurie”, height: 75, bio: “Actor (House M.D., Blackadder)” },
+{ id: 125, name: “Steve Carell”, height: 70, bio: “Actor (The Office, The 40-Year-Old Virgin)” },
+{ id: 126, name: “John Krasinski”, height: 74, bio: “Actor (The Office, A Quiet Place)” },
+{ id: 127, name: “Ed Helms”, height: 72, bio: “Actor (The Office, The Hangover)” },
+{ id: 128, name: “Rainn Wilson”, height: 74, bio: “Actor (The Office — Dwight Schrute)” },
+{ id: 129, name: “Eugene Levy”, height: 70, bio: “Actor/comedian (Schitt’s Creek, American Pie)” },
+{ id: 130, name: “Catherine O’Hara”, height: 64, bio: “Actress (Schitt’s Creek, Home Alone)” },
+{ id: 131, name: “Dan Levy”, height: 73, bio: “Actor/writer (Schitt’s Creek)” },
+{ id: 132, name: “Tony Soprano”, height: 72, bio: “Character played by James Gandolfini” },
+{ id: 133, name: “Jon Hamm”, height: 74, bio: “Actor (Mad Men — Don Draper)” },
+{ id: 134, name: “Bryan Cranston”, height: 71, bio: “Actor (Breaking Bad — Walter White)” },
+{ id: 135, name: “Aaron Paul”, height: 69, bio: “Actor (Breaking Bad — Jesse Pinkman)” },
+{ id: 136, name: “Bob Odenkirk”, height: 70, bio: “Actor (Better Call Saul, Mr. Show)” },
+{ id: 137, name: “Michael C. Hall”, height: 70, bio: “Actor (Dexter, Six Feet Under)” },
+{ id: 138, name: “Kyle MacLachlan”, height: 74, bio: “Actor (Twin Peaks, Blue Velvet)” },
+{ id: 139, name: “Peter Dinklage”, height: 57, bio: “Actor (Game of Thrones — Tyrion Lannister)” },
+{ id: 140, name: “Emilia Clarke”, height: 63, bio: “Actress (Game of Thrones — Daenerys)” },
+{ id: 141, name: “Kit Harington”, height: 67, bio: “Actor (Game of Thrones — Jon Snow)” },
+{ id: 142, name: “Lena Headey”, height: 67, bio: “Actress (Game of Thrones — Cersei)” },
+{ id: 143, name: “Maisie Williams”, height: 61, bio: “Actress (Game of Thrones — Arya Stark)” },
+{ id: 144, name: “Robin Wright”, height: 67, bio: “Actress (House of Cards, Forrest Gump)” },
+{ id: 145, name: “Kevin Spacey”, height: 70, bio: “Actor (House of Cards — Frank Underwood)” },
+// ── ADDITIONAL FILM ACTORS ──
+{ id: 146, name: “Harrison Ford”, height: 73, bio: “Actor (Indiana Jones, Star Wars, Blade Runner)” },
+{ id: 147, name: “Sean Connery”, height: 74, bio: “Actor (James Bond, The Untouchables)” },
+{ id: 148, name: “Roger Moore”, height: 74, bio: “Actor (James Bond)” },
+{ id: 149, name: “Richard Gere”, height: 71, bio: “Actor (Pretty Woman, An Officer and a Gentleman)” },
+{ id: 150, name: “Mel Gibson”, height: 71, bio: “Actor/director (Braveheart, Lethal Weapon)” },
+{ id: 151, name: “Tom Cruise”, height: 67, bio: “Actor (Top Gun, Mission: Impossible)” },
+{ id: 152, name: “Brad Pitt”, height: 71, bio: “Oscar-winning actor (Once Upon a Time…)” },
+{ id: 153, name: “Johnny Depp”, height: 70, bio: “Actor (Edward Scissorhands, Pirates of the Caribbean)” },
+{ id: 154, name: “Nicolas Cage”, height: 72, bio: “Oscar-winning actor (Leaving Las Vegas)” },
+{ id: 155, name: “Jim Carrey”, height: 75, bio: “Actor (The Truman Show, Eternal Sunshine)” },
+{ id: 156, name: “Robin Williams”, height: 68, bio: “Oscar-winning actor/comedian (Good Will Hunting)” },
+{ id: 157, name: “Eddie Murphy”, height: 69, bio: “Actor/comedian (Beverly Hills Cop)” },
+{ id: 158, name: “Chevy Chase”, height: 74, bio: “Actor/comedian (National Lampoon’s Vacation)” },
+{ id: 159, name: “Dan Aykroyd”, height: 73, bio: “Actor/comedian (Ghostbusters, Blues Brothers)” },
+{ id: 160, name: “John Belushi”, height: 67, bio: “Actor/comedian (Animal House, Blues Brothers)” },
+{ id: 161, name: “Steve Martin”, height: 71, bio: “Actor/comedian (The Jerk, L.A. Story)” },
+{ id: 162, name: “Woody Allen”, height: 65, bio: “Actor/director (Annie Hall, Manhattan)” },
+{ id: 163, name: “Gene Kelly”, height: 70, bio: “Actor/dancer (Singin’ in the Rain)” },
+{ id: 164, name: “Fred Astaire”, height: 70, bio: “Actor/dancer (Top Hat, Swing Time)” },
+{ id: 165, name: “Buster Keaton”, height: 65, bio: “Silent film legend” },
+{ id: 166, name: “Charlie Chaplin”, height: 65, bio: “Silent film icon (The Kid, Modern Times)” },
+{ id: 167, name: “Laurence Olivier”, height: 72, bio: “Legendary British actor (Hamlet)” },
+{ id: 168, name: “Richard Burton”, height: 70, bio: “Welsh actor (Who’s Afraid of Virginia Woolf?)” },
+{ id: 169, name: “Peter O’Toole”, height: 75, bio: “Actor (Lawrence of Arabia)” },
+{ id: 170, name: “Rex Harrison”, height: 74, bio: “Actor (My Fair Lady)” },
+{ id: 171, name: “Michael Caine”, height: 74, bio: “Two-time Oscar-winning actor” },
+{ id: 172, name: “Albert Finney”, height: 71, bio: “Actor (Tom Jones, Erin Brockovich)” },
+{ id: 173, name: “Terence Stamp”, height: 71, bio: “Actor (The Collector, Superman II)” },
+{ id: 174, name: “Oliver Reed”, height: 73, bio: “Actor (Oliver!, Women in Love)” },
+{ id: 175, name: “Alan Bates”, height: 71, bio: “Actor (Women in Love, Gosford Park)” },
+// ── MORE ACTRESSES ──
+{ id: 176, name: “Sigourney Weaver”, height: 72, bio: “Actress (Alien, Ghostbusters)” },
+{ id: 177, name: “Jamie Lee Curtis”, height: 67, bio: “Actress (Halloween, True Lies)” },
+{ id: 178, name: “Sissy Spacek”, height: 65, bio: “Oscar-winning actress (Coal Miner’s Daughter)” },
+{ id: 179, name: “Jane Fonda”, height: 67, bio: “Two-time Oscar-winning actress” },
+{ id: 180, name: “Faye Dunaway”, height: 67, bio: “Oscar-winning actress (Network)” },
+{ id: 181, name: “Diane Keaton”, height: 67, bio: “Oscar-winning actress (Annie Hall)” },
+{ id: 182, name: “Goldie Hawn”, height: 65, bio: “Oscar-winning actress (Cactus Flower)” },
+{ id: 183, name: “Barbra Streisand”, height: 65, bio: “Oscar & Grammy-winning actress/singer” },
+{ id: 184, name: “Liza Minnelli”, height: 65, bio: “Oscar-winning actress (Cabaret)” },
+{ id: 185, name: “Ann-Margret”, height: 65, bio: “Actress/singer (Bye Bye Birdie)” },
+{ id: 186, name: “Raquel Welch”, height: 67, bio: “Actress (One Million Years B.C.)” },
+{ id: 187, name: “Angie Dickinson”, height: 66, bio: “Actress (Police Woman, Dressed to Kill)” },
+{ id: 188, name: “Tuesday Weld”, height: 64, bio: “Actress (Pretty Poison)” },
+{ id: 189, name: “Candice Bergen”, height: 68, bio: “Actress (Murphy Brown)” },
+{ id: 190, name: “Cher”, height: 67, bio: “Oscar-winning actress & pop icon” },
+{ id: 191, name: “Anjelica Huston”, height: 70, bio: “Oscar-winning actress (Prizzi’s Honor)” },
+{ id: 192, name: “Whoopi Goldberg”, height: 65, bio: “Oscar-winning actress (Ghost)” },
+{ id: 193, name: “Geena Davis”, height: 72, bio: “Oscar-winning actress (The Accidental Tourist)” },
+{ id: 194, name: “Demi Moore”, height: 65, bio: “Actress (Ghost, G.I. Jane)” },
+{ id: 195, name: “Sharon Stone”, height: 67, bio: “Actress (Basic Instinct, Casino)” },
+{ id: 196, name: “Kim Basinger”, height: 67, bio: “Oscar-winning actress (L.A. Confidential)” },
+{ id: 197, name: “Michelle Pfeiffer”, height: 67, bio: “Actress (Scarface, Batman Returns)” },
+{ id: 198, name: “Glenn Close”, height: 65, bio: “Actress (Fatal Attraction, Dangerous Liaisons)” },
+{ id: 199, name: “Kirstie Alley”, height: 67, bio: “Actress (Cheers, Look Who’s Talking)” },
+{ id: 200, name: “Kathleen Turner”, height: 68, bio: “Actress (Body Heat, Romancing the Stone)” },
+// ── 80s & 90s MUSICIANS ──
+{ id: 201, name: “David Bowie”, height: 71, bio: “Rock legend (Ziggy Stardust, Space Oddity)” },
+{ id: 202, name: “Freddie Mercury”, height: 69, bio: “Queen frontman & rock legend” },
+{ id: 203, name: “Elvis Presley”, height: 72, bio: “King of Rock and Roll” },
+{ id: 204, name: “Mick Jagger”, height: 70, bio: “Rolling Stones frontman” },
+{ id: 205, name: “Keith Richards”, height: 70, bio: “Rolling Stones guitarist” },
+{ id: 206, name: “Robert Plant”, height: 72, bio: “Led Zeppelin vocalist” },
+{ id: 207, name: “Jimmy Page”, height: 71, bio: “Led Zeppelin guitarist” },
+{ id: 208, name: “Roger Daltrey”, height: 68, bio: “The Who frontman” },
+{ id: 209, name: “Pete Townshend”, height: 73, bio: “The Who guitarist/songwriter” },
+{ id: 210, name: “Gary Numan”, height: 68, bio: “Synth-pop pioneer (Cars, Are Friends Electric?)” },
+{ id: 211, name: “Sid Vicious”, height: 73, bio: “Sex Pistols bassist & punk icon” },
+{ id: 212, name: “Johnny Rotten”, height: 70, bio: “Sex Pistols frontman (John Lydon)” },
+{ id: 213, name: “Joe Strummer”, height: 69, bio: “The Clash frontman” },
+{ id: 214, name: “Mick Jones”, height: 70, bio: “The Clash guitarist” },
+{ id: 215, name: “Paul Simonon”, height: 73, bio: “The Clash bassist” },
+{ id: 216, name: “Ian Curtis”, height: 71, bio: “Joy Division vocalist” },
+{ id: 217, name: “Bernard Sumner”, height: 70, bio: “New Order/Joy Division guitarist” },
+{ id: 218, name: “Peter Hook”, height: 72, bio: “New Order/Joy Division bassist” },
+{ id: 219, name: “Robert Smith”, height: 69, bio: “The Cure frontman” },
+{ id: 220, name: “Morrissey”, height: 72, bio: “The Smiths vocalist” },
+{ id: 221, name: “Johnny Marr”, height: 69, bio: “The Smiths guitarist” },
+{ id: 222, name: “Mark E. Smith”, height: 70, bio: “The Fall frontman” },
+{ id: 223, name: “Elvis Costello”, height: 70, bio: “Singer/songwriter (Alison, Pump It Up)” },
+{ id: 224, name: “Nick Cave”, height: 74, bio: “Nick Cave & the Bad Seeds frontman” },
+{ id: 225, name: “Shane MacGowan”, height: 69, bio: “The Pogues vocalist” },
+{ id: 226, name: “Siouxsie Sioux”, height: 67, bio: “Siouxsie and the Banshees frontwoman” },
+{ id: 227, name: “Debbie Harry”, height: 65, bio: “Blondie frontwoman” },
+{ id: 228, name: “Patti Smith”, height: 67, bio: “Punk poet & rock musician” },
+{ id: 229, name: “Joan Jett”, height: 63, bio: “Rocker (I Love Rock ‘n’ Roll)” },
+{ id: 230, name: “Chrissie Hynde”, height: 66, bio: “The Pretenders frontwoman” },
+{ id: 231, name: “Sting”, height: 71, bio: “The Police frontman & solo artist” },
+{ id: 232, name: “Andy Summers”, height: 72, bio: “The Police guitarist” },
+{ id: 233, name: “Stewart Copeland”, height: 72, bio: “The Police drummer” },
+{ id: 234, name: “Bono”, height: 67, bio: “U2 frontman” },
+{ id: 235, name: “The Edge”, height: 70, bio: “U2 guitarist” },
+{ id: 236, name: “Billy Idol”, height: 71, bio: “Solo rocker (Rebel Yell, White Wedding)” },
+{ id: 237, name: “Adam Ant”, height: 69, bio: “New Wave icon (Goody Two Shoes)” },
+{ id: 238, name: “Boy George”, height: 71, bio: “Culture Club frontman” },
+{ id: 239, name: “George Michael”, height: 70, bio: “Wham! & solo pop icon” },
+{ id: 240, name: “Simon Le Bon”, height: 71, bio: “Duran Duran vocalist” },
+{ id: 241, name: “Nick Rhodes”, height: 68, bio: “Duran Duran keyboardist” },
+{ id: 242, name: “Andy Taylor”, height: 70, bio: “Duran Duran guitarist” },
+{ id: 243, name: “Howard Jones”, height: 68, bio: “Synth-pop musician (New Song, Things Can Only Get Better)” },
+{ id: 244, name: “Thomas Dolby”, height: 72, bio: “Musician (She Blinded Me with Science)” },
+{ id: 245, name: “Tears for Fears”, height: 70, bio: “Roland Orzabal — Shout, Everybody Wants to Rule” },
+{ id: 246, name: “Roland Orzabal”, height: 70, bio: “Tears for Fears co-founder” },
+{ id: 247, name: “Curt Smith”, height: 69, bio: “Tears for Fears co-founder” },
+{ id: 248, name: “Martin Gore”, height: 67, bio: “Depeche Mode songwriter/guitarist” },
+{ id: 249, name: “Dave Gahan”, height: 73, bio: “Depeche Mode vocalist” },
+{ id: 250, name: “Andy Fletcher”, height: 70, bio: “Depeche Mode keyboardist” },
+{ id: 251, name: “Vince Clarke”, height: 70, bio: “Depeche Mode/Erasure founder” },
+{ id: 252, name: “Andy Bell”, height: 71, bio: “Erasure vocalist” },
+{ id: 253, name: “Marc Almond”, height: 65, bio: “Soft Cell vocalist (Tainted Love)” },
+{ id: 254, name: “Dave Ball”, height: 72, bio: “Soft Cell musician” },
+{ id: 255, name: “Midge Ure”, height: 67, bio: “Ultravox frontman (Vienna)” },
+{ id: 256, name: “Billy Mackenzie”, height: 70, bio: “The Associates vocalist” },
+{ id: 257, name: “Edwyn Collins”, height: 72, bio: “Orange Juice vocalist” },
+{ id: 258, name: “Lloyd Cole”, height: 72, bio: “Singer/songwriter (Perfect Skin)” },
+{ id: 259, name: “Aztec Camera”, height: 68, bio: “Roddy Frame — indie pop” },
+{ id: 260, name: “Roddy Frame”, height: 68, bio: “Aztec Camera frontman” },
+// ── GRUNGE & ALTERNATIVE 90s ──
+{ id: 261, name: “Kurt Cobain”, height: 69, bio: “Nirvana frontman” },
+{ id: 262, name: “Dave Grohl”, height: 73, bio: “Nirvana/Foo Fighters drummer/frontman” },
+{ id: 263, name: “Krist Novoselic”, height: 79, bio: “Nirvana bassist” },
+{ id: 264, name: “Eddie Vedder”, height: 69, bio: “Pearl Jam vocalist” },
+{ id: 265, name: “Chris Cornell”, height: 74, bio: “Soundgarden/Audioslave vocalist” },
+{ id: 266, name: “Layne Staley”, height: 71, bio: “Alice in Chains vocalist” },
+{ id: 267, name: “Jerry Cantrell”, height: 73, bio: “Alice in Chains guitarist” },
+{ id: 268, name: “Scott Weiland”, height: 71, bio: “Stone Temple Pilots vocalist” },
+{ id: 269, name: “Billy Corgan”, height: 75, bio: “Smashing Pumpkins frontman” },
+{ id: 270, name: “Trent Reznor”, height: 68, bio: “Nine Inch Nails founder” },
+{ id: 271, name: “Thom Yorke”, height: 66, bio: “Radiohead vocalist/frontman” },
+{ id: 272, name: “Jonny Greenwood”, height: 70, bio: “Radiohead guitarist” },
+{ id: 273, name: “Damon Albarn”, height: 71, bio: “Blur/Gorillaz frontman” },
+{ id: 274, name: “Liam Gallagher”, height: 71, bio: “Oasis vocalist” },
+{ id: 275, name: “Noel Gallagher”, height: 69, bio: “Oasis guitarist/songwriter” },
+{ id: 276, name: “Brett Anderson”, height: 72, bio: “Suede vocalist” },
+{ id: 277, name: “Jarvis Cocker”, height: 76, bio: “Pulp vocalist/frontman” },
+{ id: 278, name: “Evan Dando”, height: 72, bio: “Lemonheads vocalist” },
+{ id: 279, name: “Beck Hansen”, height: 70, bio: “Musician (Loser, Where It’s At)” },
+{ id: 280, name: “Rivers Cuomo”, height: 67, bio: “Weezer frontman” },
+{ id: 281, name: “Lou Barlow”, height: 69, bio: “Sebadoh/Dinosaur Jr musician” },
+{ id: 282, name: “J Mascis”, height: 71, bio: “Dinosaur Jr frontman” },
+{ id: 283, name: “Kim Deal”, height: 63, bio: “Pixies/Breeders bassist/vocalist” },
+{ id: 284, name: “Black Francis”, height: 68, bio: “Pixies frontman (Charles Thompson)” },
+{ id: 285, name: “Frank Black”, height: 68, bio: “Pixies/solo artist” },
+{ id: 286, name: “Thurston Moore”, height: 77, bio: “Sonic Youth guitarist/vocalist” },
+{ id: 287, name: “Kim Gordon”, height: 68, bio: “Sonic Youth bassist/vocalist” },
+{ id: 288, name: “Lee Ranaldo”, height: 72, bio: “Sonic Youth guitarist” },
+{ id: 289, name: “Stephen Malkmus”, height: 73, bio: “Pavement vocalist/guitarist” },
+{ id: 290, name: “Mark Lanegan”, height: 74, bio: “Screaming Trees vocalist” },
+// ── MORE 80s ROCK & POP ──
+{ id: 291, name: “Peter Gabriel”, height: 71, bio: “Genesis/solo artist (Sledgehammer)” },
+{ id: 292, name: “Phil Collins”, height: 67, bio: “Genesis drummer/vocalist” },
+{ id: 293, name: “Mike Rutherford”, height: 73, bio: “Genesis guitarist” },
+{ id: 294, name: “Tony Banks”, height: 70, bio: “Genesis keyboardist” },
+{ id: 295, name: “Steve Hackett”, height: 68, bio: “Genesis guitarist” },
+{ id: 296, name: “Ian Anderson”, height: 71, bio: “Jethro Tull frontman” },
+{ id: 297, name: “Roger Waters”, height: 74, bio: “Pink Floyd bassist/lyricist” },
+{ id: 298, name: “David Gilmour”, height: 72, bio: “Pink Floyd guitarist/vocalist” },
+{ id: 299, name: “Syd Barrett”, height: 71, bio: “Pink Floyd founder” },
+{ id: 300, name: “Nick Mason”, height: 71, bio: “Pink Floyd drummer” },
+{ id: 301, name: “Rick Wakeman”, height: 71, bio: “Yes keyboardist (The Six Wives)” },
+{ id: 302, name: “Jon Anderson”, height: 66, bio: “Yes vocalist” },
+{ id: 303, name: “Steve Howe”, height: 70, bio: “Yes guitarist” },
+{ id: 304, name: “Chris Squire”, height: 74, bio: “Yes bassist” },
+{ id: 305, name: “Ozzy Osbourne”, height: 68, bio: “Black Sabbath vocalist/solo artist” },
+{ id: 306, name: “Tony Iommi”, height: 73, bio: “Black Sabbath guitarist” },
+{ id: 307, name: “Geezer Butler”, height: 72, bio: “Black Sabbath bassist” },
+{ id: 308, name: “Ronnie James Dio”, height: 65, bio: “Black Sabbath/Dio vocalist” },
+{ id: 309, name: “Bruce Dickinson”, height: 71, bio: “Iron Maiden vocalist” },
+{ id: 310, name: “Steve Harris”, height: 71, bio: “Iron Maiden bassist/founder” },
+{ id: 311, name: “James Hetfield”, height: 72, bio: “Metallica vocalist/guitarist” },
+{ id: 312, name: “Lars Ulrich”, height: 67, bio: “Metallica drummer/co-founder” },
+{ id: 313, name: “Axl Rose”, height: 70, bio: “Guns N’ Roses vocalist” },
+{ id: 314, name: “Slash”, height: 71, bio: “Guns N’ Roses guitarist” },
+{ id: 315, name: “Duff McKagan”, height: 75, bio: “Guns N’ Roses bassist” },
+{ id: 316, name: “Tommy Lee”, height: 74, bio: “Mötley Crüe drummer” },
+{ id: 317, name: “Vince Neil”, height: 69, bio: “Mötley Crüe vocalist” },
+{ id: 318, name: “Nikki Sixx”, height: 74, bio: “Mötley Crüe bassist/songwriter” },
+{ id: 319, name: “Jon Bon Jovi”, height: 70, bio: “Bon Jovi vocalist (Livin’ on a Prayer)” },
+{ id: 320, name: “Richie Sambora”, height: 72, bio: “Bon Jovi guitarist” },
+{ id: 321, name: “Don Henley”, height: 69, bio: “Eagles drummer/vocalist” },
+{ id: 322, name: “Glenn Frey”, height: 70, bio: “Eagles guitarist/vocalist” },
+{ id: 323, name: “Joe Walsh”, height: 70, bio: “Eagles/solo guitarist” },
+{ id: 324, name: “Tom Petty”, height: 72, bio: “Rock musician (Free Fallin’, American Girl)” },
+{ id: 325, name: “Mike Campbell”, height: 71, bio: “Tom Petty’s Heartbreakers guitarist” },
+// ── POST-PUNK & INDIE ──
+{ id: 326, name: “Mark Mothersbaugh”, height: 67, bio: “Devo frontman” },
+{ id: 327, name: “Gerald Casale”, height: 70, bio: “Devo co-founder” },
+{ id: 328, name: “David Byrne”, height: 74, bio: “Talking Heads frontman” },
+{ id: 329, name: “Tina Weymouth”, height: 64, bio: “Talking Heads bassist” },
+{ id: 330, name: “Chris Frantz”, height: 69, bio: “Talking Heads drummer” },
+{ id: 331, name: “Jerry Harrison”, height: 71, bio: “Talking Heads guitarist” },
+{ id: 332, name: “Chris Stein”, height: 72, bio: “Blondie guitarist/co-founder” },
+{ id: 333, name: “Clem Burke”, height: 68, bio: “Blondie drummer” },
+{ id: 334, name: “Glenn Danzig”, height: 66, bio: “Misfits/Danzig vocalist” },
+{ id: 335, name: “Henry Rollins”, height: 70, bio: “Black Flag/Rollins Band vocalist” },
+{ id: 336, name: “Greg Ginn”, height: 72, bio: “Black Flag guitarist” },
+{ id: 337, name: “Jello Biafra”, height: 74, bio: “Dead Kennedys vocalist” },
+{ id: 338, name: “Paul Weller”, height: 69, bio: “The Jam/Style Council frontman” },
+{ id: 339, name: “Bruce Foxton”, height: 70, bio: “The Jam bassist” },
+{ id: 340, name: “Rick Buckler”, height: 70, bio: “The Jam drummer” },
+{ id: 341, name: “Ian McCulloch”, height: 70, bio: “Echo & the Bunnymen vocalist” },
+{ id: 342, name: “Will Sergeant”, height: 71, bio: “Echo & the Bunnymen guitarist” },
+{ id: 343, name: “Dave McCulloch”, height: 70, bio: “Echo & the Bunnymen” },
+{ id: 344, name: “Martin Fry”, height: 71, bio: “ABC vocalist (The Lexicon of Love)” },
+{ id: 345, name: “Anne Dudley”, height: 65, bio: “Art of Noise co-founder” },
+{ id: 346, name: “Trevor Horn”, height: 70, bio: “Buggles/Yes/producer (Video Killed the Radio Star)” },
+{ id: 347, name: “Gary Numan”, height: 68, bio: “Synth pioneer (Cars, Are Friends Electric)” },
+{ id: 348, name: “John Foxx”, height: 70, bio: “Ultravox founder (pre-Midge Ure)” },
+{ id: 349, name: “Steve Strange”, height: 70, bio: “Visage vocalist (Fade to Grey)” },
+{ id: 350, name: “Rusty Egan”, height: 71, bio: “Visage/Rich Kids drummer” },
+// ── FEMALE 80s & 90s ARTISTS ──
+{ id: 351, name: “Kate Bush”, height: 63, bio: “Singer/songwriter (Wuthering Heights, Running Up That Hill)” },
+{ id: 352, name: “Annie Lennox”, height: 66, bio: “Eurythmics vocalist” },
+{ id: 353, name: “Dave Stewart”, height: 74, bio: “Eurythmics guitarist/songwriter” },
+{ id: 354, name: “Björk”, height: 61, bio: “Icelandic singer/songwriter” },
+{ id: 355, name: “PJ Harvey”, height: 67, bio: “Singer/songwriter (Dry, Rid of Me)” },
+{ id: 356, name: “Tori Amos”, height: 64, bio: “Singer/songwriter (Little Earthquakes)” },
+{ id: 357, name: “Sinéad O’Connor”, height: 66, bio: “Singer (Nothing Compares 2 U)” },
+{ id: 358, name: “Tracy Chapman”, height: 65, bio: “Singer/songwriter (Fast Car)” },
+{ id: 359, name: “Suzanne Vega”, height: 63, bio: “Singer/songwriter (Luka, Tom’s Diner)” },
+{ id: 360, name: “Natalie Merchant”, height: 65, bio: “10,000 Maniacs/solo vocalist” },
+{ id: 361, name: “Liz Phair”, height: 65, bio: “Alternative singer/songwriter (Exile in Guyville)” },
+{ id: 362, name: “Courtney Love”, height: 66, bio: “Hole vocalist” },
+{ id: 363, name: “Shirley Manson”, height: 67, bio: “Garbage vocalist” },
+{ id: 364, name: “Dolores O’Riordan”, height: 64, bio: “The Cranberries vocalist” },
+{ id: 365, name: “Gwen Stefani”, height: 66, bio: “No Doubt vocalist” },
+{ id: 366, name: “Alanis Morissette”, height: 65, bio: “Singer/songwriter (Jagged Little Pill)” },
+{ id: 367, name: “Fiona Apple”, height: 65, bio: “Singer/songwriter (Tidal)” },
+{ id: 368, name: “Jewel”, height: 68, bio: “Singer/songwriter (Pieces of You)” },
+{ id: 369, name: “Sarah McLachlan”, height: 65, bio: “Singer/songwriter (Possession, Angel)” },
+{ id: 370, name: “Shania Twain”, height: 66, bio: “Country/pop singer (Man! I Feel Like a Woman)” },
+// ── SOUL, FUNK & R&B LEGENDS ──
+{ id: 371, name: “James Brown”, height: 66, bio: “Godfather of Soul” },
+{ id: 372, name: “Marvin Gaye”, height: 71, bio: “Soul legend (What’s Going On, Let’s Get It On)” },
+{ id: 373, name: “Stevie Wonder”, height: 70, bio: “Soul/pop legend (Superstition, Sir Duke)” },
+{ id: 374, name: “Aretha Franklin”, height: 65, bio: “Queen of Soul” },
+{ id: 375, name: “Ray Charles”, height: 70, bio: “Soul/R&B legend (Hit the Road Jack)” },
+{ id: 376, name: “Otis Redding”, height: 72, bio: “Soul singer ((Sittin’ On) The Dock of the Bay)” },
+{ id: 377, name: “Wilson Pickett”, height: 72, bio: “Soul singer (Mustang Sally)” },
+{ id: 378, name: “Al Green”, height: 69, bio: “Soul singer (Let’s Stay Together)” },
+{ id: 379, name: “Sam Cooke”, height: 71, bio: “Soul/pop pioneer (A Change Is Gonna Come)” },
+{ id: 380, name: “Jackie Wilson”, height: 68, bio: “R&B singer (Reet Petite)” },
+// ── MORE TV COMEDIANS & ACTORS ──
+{ id: 381, name: “John Cleese”, height: 78, bio: “Monty Python/Fawlty Towers comedian” },
+{ id: 382, name: “Eric Idle”, height: 72, bio: “Monty Python comedian/actor” },
+{ id: 383, name: “Michael Palin”, height: 71, bio: “Monty Python comedian/traveler” },
+{ id: 384, name: “Terry Gilliam”, height: 72, bio: “Monty Python animator/director” },
+{ id: 385, name: “Graham Chapman”, height: 73, bio: “Monty Python comedian” },
+{ id: 386, name: “Terry Jones”, height: 68, bio: “Monty Python comedian/director” },
+{ id: 387, name: “Rowan Atkinson”, height: 72, bio: “Mr. Bean/Blackadder comedian” },
+{ id: 388, name: “Peter Cook”, height: 76, bio: “British comedian/satirist” },
+{ id: 389, name: “Dudley Moore”, height: 63, bio: “British comedian/actor (Arthur)” },
+{ id: 390, name: “John Inman”, height: 69, bio: “Actor (Are You Being Served?)” },
+{ id: 391, name: “Ronnie Barker”, height: 69, bio: “British comedian (Porridge, Open All Hours)” },
+{ id: 392, name: “Ronnie Corbett”, height: 61, bio: “The Two Ronnies comedian” },
+{ id: 393, name: “Benny Hill”, height: 70, bio: “British comedian/entertainer” },
+{ id: 394, name: “Peter Kay”, height: 70, bio: “British comedian (Phoenix Nights)” },
+{ id: 395, name: “Bob Newhart”, height: 71, bio: “Comedian/actor (The Bob Newhart Show)” },
+{ id: 396, name: “Garry Shandling”, height: 73, bio: “Comedian (The Larry Sanders Show)” },
+{ id: 397, name: “Albert Brooks”, height: 70, bio: “Comedian/actor/director” },
+{ id: 398, name: “Larry David”, height: 71, bio: “Comedian/writer (Curb Your Enthusiasm)” },
+{ id: 399, name: “Richard Pryor”, height: 68, bio: “Stand-up legend” },
+{ id: 400, name: “George Carlin”, height: 70, bio: “Legendary stand-up comedian” },
+// ── MORE CULT FILM & INDIE ACTORS ──
+{ id: 401, name: “John Malkovich”, height: 72, bio: “Actor (Being John Malkovich, Dangerous Liaisons)” },
+{ id: 402, name: “William H. Macy”, height: 71, bio: “Actor (Fargo, Shameless)” },
+{ id: 403, name: “Edward Norton”, height: 72, bio: “Actor (Fight Club, American History X)” },
+{ id: 404, name: “Jared Leto”, height: 69, bio: “Actor/musician (Fight Club, Dallas Buyers Club)” },
+{ id: 405, name: “Brad Renfro”, height: 70, bio: “Actor (The Client, Apt Pupil)” },
+{ id: 406, name: “Cillian Murphy”, height: 70, bio: “Actor (Peaky Blinders, Oppenheimer)” },
+{ id: 407, name: “Paul Bettany”, height: 75, bio: “Actor (A Beautiful Mind, WandaVision)” },
+{ id: 408, name: “Jude Law”, height: 71, bio: “Actor (The Talented Mr. Ripley)” },
+{ id: 409, name: “Ewan McGregor”, height: 70, bio: “Actor (Trainspotting, Moulin Rouge)” },
+{ id: 410, name: “Robert Carlyle”, height: 68, bio: “Actor (Trainspotting, The Full Monty)” },
+{ id: 411, name: “James McAvoy”, height: 68, bio: “Actor (Atonement, Split)” },
+{ id: 412, name: “Michael Fassbender”, height: 72, bio: “Actor (Shame, 12 Years a Slave)” },
+{ id: 413, name: “Chiwetel Ejiofor”, height: 72, bio: “Actor (12 Years a Slave, Kinky Boots)” },
+{ id: 414, name: “Idris Elba”, height: 74, bio: “Actor (The Wire, Luther)” },
+{ id: 415, name: “Damian Lewis”, height: 72, bio: “Actor (Billions, Band of Brothers)” },
+{ id: 416, name: “Clive Owen”, height: 73, bio: “Actor (Closer, Children of Men)” },
+{ id: 417, name: “Ralph Fiennes”, height: 72, bio: “Actor (The English Patient, Schindler’s List)” },
+{ id: 418, name: “Jeremy Irons”, height: 73, bio: “Oscar-winning actor (Reversal of Fortune)” },
+{ id: 419, name: “Bob Hoskins”, height: 65, bio: “Actor (The Long Good Friday, Who Framed Roger Rabbit)” },
+{ id: 420, name: “Ray Winstone”, height: 69, bio: “Actor (Sexy Beast, The Departed)” },
+// ── DIRECTORS WHO ACTED ──
+{ id: 421, name: “Quentin Tarantino”, height: 74, bio: “Director/actor (Pulp Fiction, Inglourious Basterds)” },
+{ id: 422, name: “Martin Scorsese”, height: 63, bio: “Director (Goodfellas, Taxi Driver)” },
+{ id: 423, name: “Francis Ford Coppola”, height: 73, bio: “Director (The Godfather, Apocalypse Now)” },
+{ id: 424, name: “Stanley Kubrick”, height: 70, bio: “Director (2001, A Clockwork Orange)” },
+{ id: 425, name: “Alfred Hitchcock”, height: 71, bio: “Director (Psycho, Rear Window)” },
+// ── ADDITIONAL MUSICIANS ──
+{ id: 426, name: “Lou Reed”, height: 70, bio: “Velvet Underground/solo (Walk on the Wild Side)” },
+{ id: 427, name: “Iggy Pop”, height: 67, bio: “The Stooges frontman & punk godfather” },
+{ id: 428, name: “Patti Smith”, height: 67, bio: “Punk poet laureate” },
+{ id: 429, name: “Television”, height: 72, bio: “Tom Verlaine — Television guitarist/vocalist” },
+{ id: 430, name: “Tom Verlaine”, height: 72, bio: “Television guitarist/vocalist” },
+{ id: 431, name: “Richard Hell”, height: 71, bio: “Punk bassist/vocalist (Richard Hell & the Voidoids)” },
+{ id: 432, name: “Nick Lowe”, height: 71, bio: “Pub rock/new wave (Cruel to Be Kind)” },
+{ id: 433, name: “Graham Parker”, height: 68, bio: “Pub rock/new wave musician” },
+{ id: 434, name: “Squeeze”, height: 69, bio: “Chris Difford — Squeeze guitarist/vocalist” },
+{ id: 435, name: “Chris Difford”, height: 69, bio: “Squeeze guitarist/songwriter” },
+{ id: 436, name: “Glenn Tilbrook”, height: 70, bio: “Squeeze vocalist/guitarist” },
+{ id: 437, name: “Madness”, height: 70, bio: “Suggs — Madness frontman (Our House)” },
+{ id: 438, name: “Suggs”, height: 70, bio: “Madness vocalist” },
+{ id: 439, name: “Terry Hall”, height: 70, bio: “The Specials vocalist” },
+{ id: 440, name: “Jerry Dammers”, height: 69, bio: “The Specials founder/keyboardist” },
+{ id: 441, name: “Ranking Roger”, height: 69, bio: “The Beat vocalist” },
+{ id: 442, name: “Joe Jackson”, height: 73, bio: “Musician (Is She Really Going Out with Him?)” },
+{ id: 443, name: “Ian Dury”, height: 66, bio: “Blockheads frontman (Hit Me with Your Rhythm Stick)” },
+{ id: 444, name: “Wreckless Eric”, height: 69, bio: “Musician (Whole Wide World)” },
+{ id: 445, name: “XTC”, height: 71, bio: “Andy Partridge — XTC frontman” },
+{ id: 446, name: “Andy Partridge”, height: 71, bio: “XTC vocalist/guitarist” },
+{ id: 447, name: “Colin Moulding”, height: 70, bio: “XTC bassist/vocalist” },
+{ id: 448, name: “Captain Sensible”, height: 68, bio: “The Damned guitarist (Happy Talk)” },
+{ id: 449, name: “Dave Vanian”, height: 72, bio: “The Damned vocalist” },
+{ id: 450, name: “Rat Scabies”, height: 68, bio: “The Damned drummer” },
+// ── FINAL 50: MORE CLASSIC FILM & TV ──
+{ id: 451, name: “James Coburn”, height: 75, bio: “Oscar-winning actor (Affliction)” },
+{ id: 452, name: “Lee Marvin”, height: 75, bio: “Oscar-winning actor (Cat Ballou)” },
+{ id: 453, name: “Robert Ryan”, height: 75, bio: “Actor (The Wild Bunch, Bad Day at Black Rock)” },
+{ id: 454, name: “Telly Savalas”, height: 72, bio: “Actor (Kojak)” },
+{ id: 455, name: “Rod Steiger”, height: 71, bio: “Oscar-winning actor (In the Heat of the Night)” },
+{ id: 456, name: “George C. Scott”, height: 72, bio: “Actor (Patton) — refused his Oscar” },
+{ id: 457, name: “Jason Robards”, height: 73, bio: “Two-time Oscar-winning actor” },
+{ id: 458, name: “Walter Matthau”, height: 74, bio: “Oscar-winning actor (The Fortune Cookie)” },
+{ id: 459, name: “Jack Lemmon”, height: 70, bio: “Two-time Oscar-winning actor (Save the Tiger)” },
+{ id: 460, name: “Tony Curtis”, height: 71, bio: “Actor (Some Like It Hot)” },
+{ id: 461, name: “Dean Martin”, height: 72, bio: “Rat Pack actor/singer” },
+{ id: 462, name: “Frank Sinatra”, height: 70, bio: “Oscar-winning actor/singer (From Here to Eternity)” },
+{ id: 463, name: “Sammy Davis Jr.”, height: 65, bio: “Rat Pack entertainer/actor” },
+{ id: 464, name: “Peter Falk”, height: 70, bio: “Actor (Columbo)” },
+{ id: 465, name: “Carroll O’Connor”, height: 71, bio: “Actor (All in the Family — Archie Bunker)” },
+{ id: 466, name: “Ed Asner”, height: 71, bio: “Actor (The Mary Tyler Moore Show, Lou Grant)” },
+{ id: 467, name: “Dick Van Dyke”, height: 74, bio: “Actor/comedian (The Dick Van Dyke Show)” },
+{ id: 468, name: “Andy Griffith”, height: 73, bio: “Actor/comedian (The Andy Griffith Show)” },
+{ id: 469, name: “Don Knotts”, height: 68, bio: “Actor (Barney Fife, The Andy Griffith Show)” },
+{ id: 470, name: “Bob Hope”, height: 71, bio: “Legendary entertainer/comedian” },
+{ id: 471, name: “Bing Crosby”, height: 69, bio: “Actor/singer (White Christmas)” },
+{ id: 472, name: “Danny Kaye”, height: 73, bio: “Actor/comedian (The Court Jester)” },
+{ id: 473, name: “Jerry Lewis”, height: 70, bio: “Comedian/actor (The Nutty Professor)” },
+{ id: 474, name: “Dean Martin”, height: 72, bio: “Singer/actor/Rat Pack member” },
+{ id: 475, name: “Shecky Greene”, height: 71, bio: “Stand-up comedian/Las Vegas performer” },
+{ id: 476, name: “Don Rickles”, height: 68, bio: “Insult comedian/actor (Kelly’s Heroes)” },
+{ id: 477, name: “Jonathan Winters”, height: 71, bio: “Improv comedian/actor” },
+{ id: 478, name: “Buddy Hackett”, height: 67, bio: “Comedian/actor” },
+{ id: 479, name: “Phil Silvers”, height: 70, bio: “Comedian/actor (Sgt. Bilko)” },
+{ id: 480, name: “Sid Caesar”, height: 73, bio: “TV comedy legend (Your Show of Shows)” },
+{ id: 481, name: “Milton Berle”, height: 73, bio: “Mr. Television, pioneering TV comedian” },
+{ id: 482, name: “Jack Benny”, height: 71, bio: “Radio & TV comedian” },
+{ id: 483, name: “Red Skelton”, height: 73, bio: “Clown/comedian/TV star” },
+{ id: 484, name: “George Burns”, height: 67, bio: “Comedian/actor (Oh, God!)” },
+{ id: 485, name: “Gracie Allen”, height: 62, bio: “Comedienne/actress (Burns & Allen)” },
+{ id: 486, name: “Lou Costello”, height: 65, bio: “Abbott & Costello comedian” },
+{ id: 487, name: “Bud Abbott”, height: 70, bio: “Abbott & Costello comedian” },
+{ id: 488, name: “Stan Laurel”, height: 68, bio: “Laurel & Hardy comedian” },
+{ id: 489, name: “Oliver Hardy”, height: 73, bio: “Laurel & Hardy comedian” },
+{ id: 490, name: “Marx Brothers”, height: 70, bio: “Groucho Marx — comic legend” },
+{ id: 491, name: “Groucho Marx”, height: 68, bio: “Marx Brothers comedian/actor” },
+{ id: 492, name: “Harpo Marx”, height: 68, bio: “Marx Brothers silent comedian” },
+{ id: 493, name: “W.C. Fields”, height: 71, bio: “Comic actor (It’s a Gift)” },
+{ id: 494, name: “Mae West”, height: 64, bio: “Actress/comedian (She Done Him Wrong)” },
+{ id: 495, name: “Tallulah Bankhead”, height: 66, bio: “Stage/screen actress” },
+{ id: 496, name: “Judy Garland”, height: 62, bio: “Actress/singer (The Wizard of Oz)” },
+{ id: 497, name: “Gene Tierney”, height: 66, bio: “Actress (Laura, Leave Her to Heaven)” },
+{ id: 498, name: “Hedy Lamarr”, height: 67, bio: “Actress & inventor” },
+{ id: 499, name: “Marlene Dietrich”, height: 67, bio: “Actress (The Blue Angel, Morocco)” },
+{ id: 500, name: “Greta Garbo”, height: 68, bio: “Classic Hollywood actress (Grand Hotel)” },
+];
+// ── Ruler ──────────────────────────────────────────────────────────────
+const RulerBorder = () => (
+<div style={{ width: 32, minHeight: "100vh", background: "#1a1a2e", borderRight: "1px solid #2d2d50",
+flexShrink: 0, position: "relative", overflow: "hidden",
+display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 8 }}>
+{Array.from({ length: 120 }).map((_, i) => (
+<div key={i} style={{ display: "flex", alignItems: "center", width: "100%", justifyContent: "flex-end", height: 10, paddingRight: 3 }}>
+<div style={{ background: i % 4 === 0 ? "#7c9eff" : "#3a3a6a", height: 1, width: i % 4 === 0 ? 18 : i % 2 === 0 ? 12 : 7 }} />
+{i % 4 === 0 && <span style={{ fontSize: 7, color: "#7c9eff", position: "absolute", left: 2, fontFamily: "monospace", lineHeight: 1, userSelect: "none" }}>{i / 4}</span>}
+</div>
+))}
+</div>
+);
+// ── Logo ───────────────────────────────────────────────────────────────
+const SilhouetteLogo = () => (
+<svg width="80" height="60" viewBox="0 0 80 60" fill="none">
+<ellipse cx="26" cy="9" rx="6" ry="6" fill="#7c9eff" opacity="0.85"/>
+<rect x="20" y="16" width="12" height="18" rx="3" fill="#7c9eff" opacity="0.85"/>
+<rect x="14" y="17" width="5" height="13" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+<rect x="33" y="17" width="5" height="13" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+<rect x="20" y="33" width="5" height="18" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+<rect x="27" y="33" width="5" height="18" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+<ellipse cx="54" cy="9" rx="6" ry="6" fill="#f472b6" opacity="0.85"/>
+<path d="M46 17 Q54 14 62 17 L64 34 H44 Z" fill="#f472b6" opacity="0.85"/>
+<rect x="42" y="17" width="4" height="12" rx="2" fill="#f472b6" opacity="0.85"/>
+<rect x="62" y="17" width="4" height="12" rx="2" fill="#f472b6" opacity="0.85"/>
+<rect x="48" y="33" width="5" height="18" rx="2.5" fill="#f472b6" opacity="0.85"/>
+<rect x="55" y="33" width="5" height="18" rx="2.5" fill="#f472b6" opacity="0.85"/>
+<line x1="8" y1="2" x2="72" y2="2" stroke="#7c9eff" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.6"/>
+</svg>
+);
+// ── Height bar ─────────────────────────────────────────────────────────
+const HeightBar = ({ height }) => {
+const pct = Math.max(5, (height / 84) * 100);
+const above = height > HEIDI_HEIGHT_INCHES;
+return (
+<div style={{ width: “100%”, height: 4, background: “#1e1e3a”, borderRadius: 2, marginTop: 6, overflow: “hidden” }}>
+<div style={{ width: `${pct}%`, height: “100%”, borderRadius: 2, transition: “width .4s”,
+background: above ? “linear-gradient(90deg,#7c9eff,#a78bfa)” : “linear-gradient(90deg,#f472b6,#fb923c)” }} />
+</div>
+);
+};
+const TABS = [
+{ id: “all”, label: “All” },
+{ id: “favorites”, label: “★ Favs” },
+{ id: “shorter”, label: “Shorter than Heidi” },
+];
+// ── Lookup ─────────────────────────────────────────────────────────────
+async function lookupCelebrity(name) {
+const res = await fetch(“https://api.anthropic.com/v1/messages”, {
+method: “POST”,
+headers: {
+“content-type”: “application/json”,
+“anthropic-version”: “2023-06-01”,
+“anthropic-dangerous-direct-browser-access”: “true”,
+},
+body: JSON.stringify({
+model: “claude-sonnet-4-6”,
+max_tokens: 80,
+messages: [{
+role: “user”,
+content: `How tall is ${name} and what are they known for? Reply in exactly this format:\nFEET: 5\nINCHES: 10\nJOB: Actor and comedian`,
+}],
+}),
+});
+if (!res.ok) {
+const e = await res.json().catch(() => ({}));
+throw new Error(e?.error?.message || `HTTP ${res.status}`);
+}
+const data = await res.json();
+const text = (data?.content?.[0]?.text || “”).trim();
+const fM = text.match(/FEET:\s*(\d+)/i);
+const iM = text.match(/INCHES:\s*([\d.]+)/i);
+const jM = text.match(/JOB:\s*(.+)/i);
+if (!fM || !iM) throw new Error(`Couldn't parse response. Enter height manually.`);
+return { feet: parseInt(fM[1], 10), inches: parseFloat(iM[1]), bio: jM ? jM[1].trim() : “” };
+}
+// ── App ────────────────────────────────────────────────────────────────
+export default function App() {
+const [celebs, setCelebs] = useState(CELEBS);
+const [favorites, setFavorites] = useState(new Set());
+const [tab, setTab] = useState(“all”);
+const [search, setSearch] = useState(””);
+const [showAdd, setShowAdd] = useState(false);
+const [sortDir, setSortDir] = useState(“desc”);
+const [confirmDel, setConfirmDel] = useState(null);
+const [newName, setNewName] = useState(””);
+const [newFeet, setNewFeet] = useState(””);
+const [newInches, setNewInches] = useState(””);
+const [newBio, setNewBio] = useState(””);
+const [lookSt, setLookSt] = useState(“idle”);
+const [lookMsg, setLookMsg] = useState(””);
+const openAdd = (prefill = “”) => {
+setNewName(prefill); setNewFeet(””); setNewInches(””); setNewBio(””);
+setLookSt(“idle”); setLookMsg(””); setShowAdd(true);
+setTimeout(() => window.scrollTo({ top: 0, behavior: “smooth” }), 60);
+};
+const closeAdd = () => { setShowAdd(false); setLookSt(“idle”); setLookMsg(””); };
+const handleLookup = async () => {
+if (!newName.trim()) return;
+setLookSt(“loading”); setLookMsg(””);
+try {
+const { feet, inches, bio } = await lookupCelebrity(newName.trim());
+setNewFeet(String(feet)); setNewInches(String(inches));
+if (bio) setNewBio(bio);
+setLookSt(“success”); setLookMsg(“Found! Review and edit if needed.”);
+} catch (e) {
+setLookSt(“error”); setLookMsg(e.message);
+}
+};
+const handleAdd = () => {
+if (!newName.trim()) return;
+const h = toInches(parseInt(newFeet, 10) || 0, parseFloat(newInches) || 0);
+setCelebs(prev => […prev, { id: Date.now(), name: newName.trim(), height: h, bio: newBio.trim() || “Celebrity” }]);
+setSearch(””); setTab(“all”); closeAdd();
+};
+const toggleFav = (id) => setFavorites(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+const handleDel = (id) => { setCelebs(prev => prev.filter(c => c.id !== id)); setFavorites(prev => { const n = new Set(prev); n.delete(id); return n; }); setConfirmDel(null); };
+const filtered = useMemo(() => {
+let list = […celebs];
+if (tab === “shorter”) list = list.filter(c => c.height < HEIDI_HEIGHT_INCHES);
+if (tab === “favorites”) list = list.filter(c => favorites.has(c.id));
+if (search.trim()) list = list.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+list.sort((a, b) => sortDir === “desc” ? b.height - a.height : a.height - b.height);
+return list;
+}, [celebs, tab, search, sortDir, favorites]);
+const inp = {
+background: “#13132a”, border: “1px solid #2d2d55”, borderRadius: 8,
+color: “#e0e0ff”, padding: “8px 12px”, fontSize: 14, outline: “none”,
+width: “100%”, fontFamily: “‘DM Sans’,sans-serif”, boxSizing: “border-box”,
+};
+return (
+<div style={{ display: “flex”, minHeight: “100vh”, background: “#0d0d1f”, fontFamily: “‘DM Sans’,sans-serif” }}>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<style>{`@keyframes spin{to{transform:rotate(360deg)}} input[type=number]::-webkit-inner-spin-button{opacity:1}`}</style>
+```
+<RulerBorder />
+<div style={{ flex: 1, display: "flex", flexDirection: "column", maxWidth: 600, margin: "0 auto", padding: "0 12px" }}>
+{/* Header */}
+<div style={{ textAlign: "center", padding: "24px 0 16px" }}>
+<SilhouetteLogo />
+<h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 26, color: "#e0e0ff", margin: "8px 0 0", letterSpacing: "-0.5px" }}>How Tall Are They?</h1>
+</div>
+{/* Search */}
+<div style={{ position: "relative", marginBottom: 12 }}>
+<span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#4444aa", fontSize: 16 }}>🔍</span>
+<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search 500 celebrities…"
+style={{ ...inp, paddingLeft: 36 }} />
+{search && <span onClick={() => setSearch("")} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#4444aa", cursor: "pointer", fontSize: 18 }}>×</span>}
+</div>
+{/* Tabs + controls */}
+<div style={{ display: "flex", gap: 6, marginBottom: 10, alignItems: "center" }}>
+{TABS.map(t => (
+<button key={t.id} onClick={() => setTab(t.id)} style={{
+flex: 1, padding: "8px 4px", borderRadius: 10, border: "none", cursor: "pointer",
+fontFamily: "'DM Sans',sans-serif", fontWeight: 600, fontSize: 12, whiteSpace: "nowrap",
+background: tab === t.id ? (t.id === "shorter" ? "#f472b6" : t.id === "favorites" ? "#f59e0b" : "#7c9eff") : "#1a1a35",
+color: tab === t.id ? "#fff" : "#5555aa",
+}}>{t.label}</button>
+))}
+<button onClick={() => setSortDir(d => d === "desc" ? "asc" : "desc")} title="Toggle sort"
+style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid #2d2d55", background: "#1a1a35", color: "#7c9eff", cursor: "pointer", fontSize: 16, lineHeight: 1, flexShrink: 0 }}>
+{sortDir === "desc" ? "↓" : "↑"}
+</button>
+<button onClick={() => showAdd ? closeAdd() : openAdd()} style={{
+padding: "8px 14px", borderRadius: 10, border: "none", flexShrink: 0,
+background: showAdd ? "#333" : "linear-gradient(135deg,#7c9eff,#a78bfa)",
+color: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 12,
+fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap",
+}}>{showAdd ? "✕ Cancel" : "+ Add"}</button>
+</div>
+{/* Add Form */}
+{showAdd && (
+<div style={{ background: "#12122a", border: "1px solid #2d2d55", borderRadius: 14, padding: 16, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+<p style={{ color: "#7c9eff", fontWeight: 600, margin: 0, fontSize: 14 }}>Add a Celebrity</p>
+<div style={{ display: "flex", gap: 8 }}>
+<input value={newName} onChange={e => { setNewName(e.target.value); setLookSt("idle"); setLookMsg(""); }}
+onKeyDown={e => e.key === "Enter" && handleLookup()}
+placeholder="Celebrity name" style={{ ...inp, flex: 1 }} />
+<button onClick={handleLookup} disabled={!newName.trim() || lookSt === "loading"} style={{
+padding: "8px 14px", borderRadius: 8, border: "none", flexShrink: 0, cursor: "pointer",
+fontWeight: 600, fontSize: 13, fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap",
+background: !newName.trim() ? "#1e1e3a" : "linear-gradient(135deg,#06b6d4,#3b82f6)",
+color: !newName.trim() ? "#3a3a6a" : "#fff",
+display: "flex", alignItems: "center", gap: 6,
+}}>
+{lookSt === "loading"
+? <><span style={{ display:"inline-block", width:12, height:12, border:"2px solid #ffffff44", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin .7s linear infinite" }}/> Looking…</>
+: "🔎 Look Up"}
+</button>
+</div>
+{lookSt === "success" && <div style={{ background: "#0f2a1a", border: "1px solid #34d39944", borderRadius: 8, padding: "8px 12px", color: "#6ee7b7", fontSize: 13 }}>✓ {lookMsg}</div>}
+{lookSt === "error" && <div style={{ background: "#2a1a1a", border: "1px solid #f8717144", borderRadius: 8, padding: "8px 12px", color: "#f87171", fontSize: 13 }}>✗ {lookMsg}</div>}
+<div style={{ display: "flex", gap: 8 }}>
+<input value={newFeet} onChange={e => setNewFeet(e.target.value)} placeholder="Feet" type="number" min="3" max="8" style={{ ...inp, flex: 1 }} />
+<input value={newInches} onChange={e => setNewInches(e.target.value)} placeholder="Inches (e.g. 10)" type="number" min="0" max="11" step="1" style={{ ...inp, flex: 1 }} />
+</div>
+<input value={newBio} onChange={e => setNewBio(e.target.value)} placeholder="Brief description…" style={inp} />
+<button onClick={handleAdd} disabled={!newName.trim()} style={{
+background: !newName.trim() ? "#1e1e3a" : "linear-gradient(135deg,#7c9eff,#a78bfa)",
+border: "none", borderRadius: 8, padding: "10px",
+color: !newName.trim() ? "#3a3a6a" : "#fff",
+fontWeight: 600, fontSize: 14, cursor: !newName.trim() ? "default" : "pointer",
+fontFamily: "'DM Sans',sans-serif",
+}}>Add to Board</button>
+</div>
+)}
+{/* Heidi line */}
+{tab === "all" && !search && (
+<div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, opacity: 0.7 }}>
+<div style={{ flex: 1, height: 1, background: "repeating-linear-gradient(90deg,#f472b6 0,#f472b6 6px,transparent 6px,transparent 12px)" }} />
+<span style={{ fontSize: 11, color: "#f472b6", whiteSpace: "nowrap", fontWeight: 600 }}>Heidi — 5′ 10.5″</span>
+<div style={{ flex: 1, height: 1, background: "repeating-linear-gradient(90deg,#f472b6 0,#f472b6 6px,transparent 6px,transparent 12px)" }} />
+</div>
+)}
+{/* Count */}
+<div style={{ color: "#444488", fontSize: 12, marginBottom: 10, textAlign: "right" }}>
+{filtered.length} of {celebs.length}
+{tab === "shorter" && <span style={{ color: "#f472b6", marginLeft: 6 }}>• Shorter than Heidi</span>}
+{tab === "favorites" && <span style={{ color: "#f59e0b", marginLeft: 6 }}>• Favorites</span>}
+</div>
+{/* List */}
+<div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 32 }}>
+{filtered.map((c, idx) => {
+const above = c.height > HEIDI_HEIGHT_INCHES;
+const isFav = favorites.has(c.id);
+const isDel = confirmDel === c.id;
+return (
+<div key={c.id}
+onMouseEnter={e => { e.currentTarget.style.transform="translateX(3px)"; e.currentTarget.style.boxShadow="0 2px 20px #0006"; }}
+onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}
+style={{ background: isFav ? "#16142e" : "#12122a", borderRadius: 12, padding: "12px 10px 12px 14px",
+border: `1px solid ${isFav ? "#f59e0b44" : above ? "#2a2a55" : "#2a1a35"}`,
+display: "flex", alignItems: "center", gap: 10, transition: "transform .15s, box-shadow .15s" }}>
+<div style={{ width: 30, height: 28, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+fontSize: 10, fontWeight: 700,
+background: idx < 3 ? "linear-gradient(135deg,#7c9eff,#a78bfa)" : "#1a1a38",
+color: idx < 3 ? "#fff" : "#4444aa" }}>#{idx+1}</div>
+<div style={{ flex: 1, minWidth: 0 }}>
+<div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+<span style={{ color: "#e0e0ff", fontWeight: 600, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+<span style={{ color: above ? "#7c9eff" : "#f472b6", fontWeight: 700, fontSize: 13, flexShrink: 0, marginLeft: 8 }}>{formatHeight(c.height)}</span>
+</div>
+<div style={{ color: "#555588", fontSize: 11, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.bio}</div>
+<HeightBar height={c.height} />
+</div>
+<div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, flexShrink: 0 }}>
+<button onClick={() => toggleFav(c.id)}
+onMouseEnter={e => e.currentTarget.style.color = isFav ? "#fbbf24" : "#7c9eff"}
+onMouseLeave={e => e.currentTarget.style.color = isFav ? "#f59e0b" : "#2d2d55"}
+style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "3px 5px", borderRadius: 6,
+color: isFav ? "#f59e0b" : "#2d2d55", transition: "color .2s" }}>★</button>
+{isDel ? (
+<div style={{ display: "flex", gap: 2 }}>
+<button onClick={() => handleDel(c.id)} style={{ background: "#3a1a1a", border: "1px solid #f8717144", borderRadius: 6, color: "#f87171", cursor: "pointer", fontSize: 11, fontWeight: 700, padding: "3px 6px", fontFamily: "'DM Sans',sans-serif" }}>✓</button>
+<button onClick={() => setConfirmDel(null)} style={{ background: "#1e1e38", border: "1px solid #2d2d55", borderRadius: 6, color: "#888", cursor: "pointer", fontSize: 11, fontWeight: 700, padding: "3px 6px", fontFamily: "'DM Sans',sans-serif" }}>✕</button>
+</div>
+) : (
+<button onClick={() => setConfirmDel(c.id)}
+onMouseEnter={e => e.currentTarget.style.color="#f87171"}
+onMouseLeave={e => e.currentTarget.style.color="#2d2d55"}
+style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, padding: "3px 5px", borderRadius: 6, color: "#2d2d55", lineHeight: 1 }}>🗑</button>
+)}
+</div>
+</div>
+);
+})}
+{filtered.length === 0 && (
+<div style={{ textAlign: "center", color: "#555588", padding: "32px 16px", fontSize: 14 }}>
+{tab === "favorites" ? (
+<>No favorites yet — tap ★ to save someone!</>
+) : search ? (
+<div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+<span style={{ fontSize: 28 }}>🔍</span>
+<div><strong style={{ color: "#7c9eff" }}>"{search}"</strong> isn't in the list yet.</div>
+<button onClick={() => openAdd(search)} style={{
+background: "linear-gradient(135deg,#7c9eff,#a78bfa)", border: "none", borderRadius: 10,
+color: "#fff", padding: "10px 20px", fontWeight: 600, fontSize: 14,
+cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
+}}>+ Add "{search}" to the Board</button>
+</div>
+) : <div>No results</div>}
+</div>
+)}
+</div>
+</div>
+</div>
+```
+);
+}
