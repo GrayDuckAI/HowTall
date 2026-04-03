@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>How Tall Are They?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0d0d1f;
+      font-family: 'DM Sans', sans-serif;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    const HEIDI_HEIGHT_INCHES = 70.5;
+
+    const toInches = (ft, ins) => ft * 12 + parseFloat(ins || 0);
+
+    const formatHeight = (total) => {
+      const ft = Math.floor(total / 12);
+      const ins = total % 12;
+      return `${ft}′ ${ins % 1 === 0 ? ins : ins.toFixed(1)}″`;
+    };
+
+    const CELEBS = [
+      // ── CLASSIC HOLLYWOOD ACTORS ──
+      { id: 1, name: "Cary Grant", height: 73, bio: "Classic Hollywood leading man" },
+      { id: 2, name: "Humphrey Bogart", height: 70, bio: "Actor (Casablanca, The Maltese Falcon)" },
+      { id: 3, name: "James Dean", height: 70, bio: "Iconic rebel actor (Rebel Without a Cause)" },
+      { id: 4, name: "Marlon Brando", height: 70, bio: "Actor (The Godfather, A Streetcar Named Desire)" },
+      { id: 5, name: "Paul Newman", height: 71, bio: "Oscar-winning actor (The Color of Money)" },
+      { id: 6, name: "Steve McQueen", height: 70, bio: "King of Cool, actor (Bullitt)" },
+      { id: 7, name: "Jack Nicholson", height: 70, bio: "Oscar-winning actor (One Flew Over the Cuckoo’s Nest)" },
+      { id: 8, name: "Robert De Niro", height: 69, bio: "Oscar-winning actor (Raging Bull, Godfather II)" },
+      { id: 9, name: "Al Pacino", height: 67, bio: "Actor (Scarface, The Godfather)" },
+      { id: 10, name: "Dustin Hoffman", height: 66, bio: "Oscar-winning actor (Rain Man, Tootsie)" },
+      { id: 11, name: "Gene Hackman", height: 72, bio: "Oscar-winning actor (The French Connection)" },
+      { id: 12, name: "Sidney Poitier", height: 74, bio: "First Black Oscar winner for leading role" },
+      { id: 13, name: "Gregory Peck", height: 75, bio: "Actor (To Kill a Mockingbird)" },
+      { id: 14, name: "Spencer Tracy", height: 70, bio: "Two-time Oscar-winning actor" },
+      { id: 15, name: "Kirk Douglas", height: 71, bio: "Actor (Spartacus)" },
+      { id: 16, name: "Burt Lancaster", height: 74, bio: "Oscar-winning actor (Elmer Gantry)" },
+      { id: 17, name: "Charlton Heston", height: 75, bio: "Actor (Ben-Hur, The Ten Commandments)" },
+      { id: 18, name: "William Holden", height: 72, bio: "Oscar-winning actor (Stalag 17)" },
+      { id: 19, name: "James Stewart", height: 75, bio: "Actor (It’s a Wonderful Life)" },
+      { id: 20, name: "Henry Fonda", height: 74, bio: "Actor (12 Angry Men, On Golden Pond)" },
+      { id: 21, name: "Clark Gable", height: 73, bio: "King of Hollywood (Gone with the Wind)" },
+      { id: 22, name: "Robert Mitchum", height: 73, bio: "Actor (Cape Fear, Night of the Hunter)" },
+      { id: 23, name: "Yul Brynner", height: 70, bio: "Oscar-winning actor (The King and I)" },
+      { id: 24, name: "Orson Welles", height: 75, bio: "Actor/director (Citizen Kane)" },
+      { id: 25, name: "Peter Sellers", height: 70, bio: "Actor (Dr. Strangelove, Pink Panther)" },
+
+      // ── CLASSIC HOLLYWOOD ACTRESSES ──
+      { id: 26, name: "Audrey Hepburn", height: 67, bio: "Oscar-winning actress (Roman Holiday)" },
+      { id: 27, name: "Katharine Hepburn", height: 68, bio: "Four-time Oscar-winning actress" },
+      { id: 28, name: "Marilyn Monroe", height: 65, bio: "Iconic actress & pop culture legend" },
+      { id: 29, name: "Grace Kelly", height: 67, bio: "Oscar-winning actress turned Princess" },
+      { id: 30, name: "Bette Davis", height: 63, bio: "Two-time Oscar-winning actress" },
+      { id: 31, name: "Joan Crawford", height: 65, bio: "Oscar-winning actress (Mildred Pierce)" },
+      { id: 32, name: "Elizabeth Taylor", height: 64, bio: "Two-time Oscar-winning actress" },
+      { id: 33, name: "Ingrid Bergman", height: 68, bio: "Oscar-winning actress (Casablanca)" },
+      { id: 34, name: "Vivien Leigh", height: 65, bio: "Oscar-winning actress (Gone with the Wind)" },
+      { id: 35, name: "Sophia Loren", height: 68, bio: "Oscar-winning Italian actress" },
+      { id: 36, name: "Doris Day", height: 65, bio: "Actress & singer (Pillow Talk)" },
+      { id: 37, name: "Lauren Bacall", height: 67, bio: "Actress (To Have and Have Not)" },
+      { id: 38, name: "Rita Hayworth", height: 65, bio: "Actress (Gilda)" },
+      { id: 39, name: "Ava Gardner", height: 66, bio: "Actress (The Killers)" },
+      { id: 40, name: "Natalie Wood", height: 62, bio: "Actress (West Side Story, Rebel Without a Cause)" },
+
+      // ── OSCAR-WINNING MODERN ACTORS ──
+      { id: 41, name: "Clint Eastwood", height: 74, bio: "Oscar-winning actor/director (Unforgiven)" },
+      { id: 42, name: "Denzel Washington", height: 71, bio: "Two-time Oscar-winning actor" },
+      { id: 43, name: "Tom Hanks", height: 72, bio: "Two-time Oscar-winning actor (Forrest Gump)" },
+      { id: 44, name: "Anthony Hopkins", height: 69, bio: "Oscar-winning actor (Silence of the Lambs)" },
+      { id: 45, name: "Daniel Day-Lewis", height: 72, bio: "Three-time Oscar-winning actor" },
+      { id: 46, name: "Sean Penn", height: 69, bio: "Two-time Oscar-winning actor" },
+      { id: 47, name: "Russell Crowe", height: 72, bio: "Oscar-winning actor (Gladiator)" },
+      { id: 48, name: "Geoffrey Rush", height: 71, bio: "Oscar-winning actor (Shine)" },
+      { id: 49, name: "Kevin Spacey", height: 70, bio: "Two-time Oscar-winning actor" },
+      { id: 50, name: "Morgan Freeman", height: 73, bio: "Oscar-winning actor (Million Dollar Baby)" },
+      { id: 51, name: "Gene Wilder", height: 71, bio: "Actor (Willy Wonka, Young Frankenstein)" },
+      { id: 52, name: "Dustin Hoffman", height: 66, bio: "Oscar-winning actor (Kramer vs. Kramer)" },
+      { id: 53, name: "Jon Voight", height: 74, bio: "Oscar-winning actor (Coming Home)" },
+      { id: 54, name: "Forest Whitaker", height: 74, bio: "Oscar-winning actor (The Last King of Scotland)" },
+      { id: 55, name: "Adrian Brody", height: 73, bio: "Oscar-winning actor (The Pianist)" },
+      { id: 56, name: "Jamie Foxx", height: 69, bio: "Oscar-winning actor (Ray)" },
+      { id: 57, name: "Philip Seymour Hoffman", height: 70, bio: "Oscar-winning actor (Capote)" },
+      { id: 58, name: "Jeff Bridges", height: 74, bio: "Oscar-winning actor (Crazy Heart)" },
+      { id: 59, name: "Colin Firth", height: 73, bio: "Oscar-winning actor (The King’s Speech)" },
+      { id: 60, name: "Eddie Redmayne", height: 71, bio: "Oscar-winning actor (The Theory of Everything)" },
+
+      // ── OSCAR-WINNING MODERN ACTRESSES ──
+      { id: 61, name: "Meryl Streep", height: 65, bio: "Three-time Oscar-winning actress" },
+      { id: 62, name: "Cate Blanchett", height: 69, bio: "Two-time Oscar-winning actress" },
+      { id: 63, name: "Jodie Foster", height: 65, bio: "Two-time Oscar-winning actress" },
+      { id: 64, name: "Hilary Swank", height: 67, bio: "Two-time Oscar-winning actress" },
+      { id: 65, name: "Charlize Theron", height: 71, bio: "Oscar-winning actress (Monster)" },
+      { id: 66, name: "Halle Berry", height: 65, bio: "Oscar-winning actress (Monster’s Ball)" },
+      { id: 67, name: "Nicole Kidman", height: 71, bio: "Oscar-winning actress (The Hours)" },
+      { id: 68, name: "Reese Witherspoon", height: 63, bio: "Oscar-winning actress (Walk the Line)" },
+      { id: 69, name: "Julia Roberts", height: 67, bio: "Oscar-winning actress (Erin Brockovich)" },
+      { id: 70, name: "Sandra Bullock", height: 68, bio: "Oscar-winning actress (The Blind Side)" },
+      { id: 71, name: "Susan Sarandon", height: 67, bio: "Oscar-winning actress (Dead Man Walking)" },
+      { id: 72, name: "Gwyneth Paltrow", height: 69, bio: "Oscar-winning actress (Shakespeare in Love)" },
+      { id: 73, name: "Natalie Portman", height: 64, bio: "Oscar-winning actress (Black Swan)" },
+      { id: 74, name: "Kathy Bates", height: 63, bio: "Oscar-winning actress (Misery)" },
+      { id: 75, name: "Helen Hunt", height: 64, bio: "Oscar-winning actress (As Good as It Gets)" },
+      { id: 76, name: "Helen Mirren", height: 64, bio: "Oscar-winning actress (The Queen)" },
+      { id: 77, name: "Kate Winslet", height: 67, bio: "Oscar-winning actress (The Reader)" },
+      { id: 78, name: "Penélope Cruz", height: 65, bio: "Oscar-winning actress (Vicky Cristina Barcelona)" },
+      { id: 79, name: "Marion Cotillard", height: 65, bio: "Oscar-winning actress (La Vie en Rose)" },
+      { id: 80, name: "Jennifer Lawrence", height: 67, bio: "Oscar-winning actress (Silver Linings Playbook)" },
+
+      // ── CULT CLASSIC ACTORS ──
+      { id: 81, name: "Bruce Lee", height: 67, bio: "Martial arts legend (Enter the Dragon)" },
+      { id: 82, name: "Clint Eastwood (Spaghetti)", height: 74, bio: "Spaghetti Western icon" },
+      { id: 83, name: "Bruce Willis", height: 72, bio: "Actor (Die Hard, Pulp Fiction)" },
+      { id: 84, name: "Arnold Schwarzenegger", height: 74, bio: "Actor (The Terminator, Predator)" },
+      { id: 85, name: "Sylvester Stallone", height: 70, bio: "Actor (Rocky, Rambo)" },
+      { id: 86, name: "Kurt Russell", height: 70, bio: "Cult actor (Escape from New York, The Thing)" },
+      { id: 87, name: "John Travolta", height: 73, bio: "Actor (Pulp Fiction, Saturday Night Fever)" },
+      { id: 88, name: "Samuel L. Jackson", height: 72, bio: "Actor (Pulp Fiction, Jackie Brown)" },
+      { id: 89, name: "Bill Murray", height: 73, bio: "Actor (Ghostbusters, Lost in Translation)" },
+      { id: 90, name: "John Cusack", height: 73, bio: "Actor (Say Anything, Grosse Pointe Blank)" },
+      { id: 91, name: "Jeff Goldblum", height: 76, bio: "Actor (The Fly, Jurassic Park)" },
+      { id: 92, name: "Tim Curry", height: 70, bio: "Actor (The Rocky Horror Picture Show)" },
+      { id: 93, name: "Christopher Walken", height: 72, bio: "Actor (The Deer Hunter, Pulp Fiction)" },
+      { id: 94, name: "Harvey Keitel", height: 69, bio: "Actor (Reservoir Dogs, Mean Streets)" },
+      { id: 95, name: "Gary Oldman", height: 69, bio: "Actor (Leon: The Professional, Dracula)" },
+      { id: 96, name: "Dennis Hopper", height: 70, bio: "Actor (Easy Rider, Blue Velvet)" },
+      { id: 97, name: "Steve Buscemi", height: 69, bio: "Actor (Reservoir Dogs, Fargo)" },
+      { id: 98, name: "Tim Roth", height: 67, bio: "Actor (Reservoir Dogs, Rob Roy)" },
+      { id: 99, name: "Michael Madsen", height: 73, bio: "Actor (Reservoir Dogs, Kill Bill)" },
+      { id: 100, name: "Benicio del Toro", height: 73, bio: "Actor (Traffic, Fear and Loathing)" },
+      { id: 101, name: "Vincent Price", height: 76, bio: "Horror icon (House of Wax, Edward Scissorhands)" },
+      { id: 102, name: "Christopher Lee", height: 77, bio: "Horror & fantasy icon (Dracula, LOTR)" },
+      { id: 103, name: "Peter Cushing", height: 72, bio: "Horror icon (Dracula, Star Wars)" },
+      { id: 104, name: "Boris Karloff", height: 75, bio: "Horror legend (Frankenstein, The Mummy)" },
+      { id: 105, name: "Bela Lugosi", height: 73, bio: "Horror legend (Dracula)" },
+
+      // ── TV ACTORS & ACTRESSES ──
+      { id: 106, name: "Bryan Cranston", height: 71, bio: "Actor (Breaking Bad, Malcolm in the Middle)" },
+      { id: 107, name: "James Gandolfini", height: 72, bio: "Actor (The Sopranos)" },
+      { id: 108, name: "David Duchovny", height: 74, bio: "Actor (The X-Files)" },
+      { id: 109, name: "Gillian Anderson", height: 63, bio: "Actress (The X-Files, The Crown)" },
+      { id: 110, name: "Jerry Seinfeld", height: 71, bio: "Comedian/actor (Seinfeld)" },
+      { id: 111, name: "Jason Alexander", height: 66, bio: "Actor (Seinfeld)" },
+      { id: 112, name: "Michael Richards", height: 76, bio: "Actor (Seinfeld — Kramer)" },
+      { id: 113, name: "Julia Louis-Dreyfus", height: 64, bio: "Actress (Seinfeld, Veep)" },
+      { id: 114, name: "Ted Danson", height: 74, bio: "Actor (Cheers, The Good Place)" },
+      { id: 115, name: "Kelsey Grammer", height: 73, bio: "Actor (Frasier, Cheers)" },
+      { id: 116, name: "David Hyde Pierce", height: 71, bio: "Actor (Frasier)" },
+      { id: 117, name: "Matthew Perry", height: 72, bio: "Actor (Friends — Chandler Bing)" },
+      { id: 118, name: "Matt LeBlanc", height: 71, bio: "Actor (Friends — Joey Tribbiani)" },
+      { id: 119, name: "David Schwimmer", height: 74, bio: "Actor (Friends — Ross Geller)" },
+      { id: 120, name: "Jennifer Aniston", height: 65, bio: "Actress (Friends — Rachel Green)" },
+      { id: 121, name: "Courteney Cox", height: 65, bio: "Actress (Friends — Monica Geller)" },
+      { id: 122, name: "Lisa Kudrow", height: 67, bio: "Actress (Friends — Phoebe Buffay)" },
+      { id: 123, name: "Tony Shalhoub", height: 68, bio: "Actor (Monk, Wings)" },
+      { id: 124, name: "Hugh Laurie", height: 75, bio: "Actor (House M.D., Blackadder)" },
+      { id: 125, name: "Steve Carell", height: 70, bio: "Actor (The Office, The 40-Year-Old Virgin)" },
+      { id: 126, name: "John Krasinski", height: 74, bio: "Actor (The Office, A Quiet Place)" },
+      { id: 127, name: "Ed Helms", height: 72, bio: "Actor (The Office, The Hangover)" },
+      { id: 128, name: "Rainn Wilson", height: 74, bio: "Actor (The Office — Dwight Schrute)" },
+      { id: 129, name: "Eugene Levy", height: 70, bio: "Actor/comedian (Schitt’s Creek, American Pie)" },
+      { id: 130, name: "Catherine O’Hara", height: 64, bio: "Actress (Schitt’s Creek, Home Alone)" },
+      { id: 131, name: "Dan Levy", height: 73, bio: "Actor/writer (Schitt’s Creek)" },
+      { id: 132, name: "Tony Soprano", height: 72, bio: "Character played by James Gandolfini" },
+      { id: 133, name: "Jon Hamm", height: 74, bio: "Actor (Mad Men — Don Draper)" },
+      { id: 134, name: "Bryan Cranston (BB)", height: 71, bio: "Actor (Breaking Bad — Walter White)" },
+      { id: 135, name: "Aaron Paul", height: 69, bio: "Actor (Breaking Bad — Jesse Pinkman)" },
+      { id: 136, name: "Bob Odenkirk", height: 70, bio: "Actor (Better 
