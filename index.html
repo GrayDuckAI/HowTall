@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>How Tall Are They?</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d1f;font-family:'DM Sans',sans-serif;min-height:100vh}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+input:focus{outline:none;border-color:#7c9eff !important}
+input[type=number]::-webkit-inner-spin-button{opacity:1}
+button:active{opacity:0.85}
+.card{animation:fadeIn .2s ease}
+</style>
+</head>
+<body>
+<div id="app" style="display:flex;min-height:100vh"></div>
+
+<script>
+const HEIDI = 70.5;
+const toIn = (ft,ins) => ft*12 + parseFloat(ins||0);
+const fmtH = (t) => { const ft=Math.floor(t/12),ins=t%12; return `${ft}′ ${ins%1===0?ins:ins.toFixed(1)}″`; };
+
+const CELEBS = [
+  // CLASSIC HOLLYWOOD ACTORS
+  {id:1,name:"Cary Grant",height:73,bio:"Classic Hollywood leading man"},
+  {id:2,name:"Humphrey Bogart",height:70,bio:"Actor (Casablanca, The Maltese Falcon)"},
+  {id:3,name:"James Dean",height:70,bio:"Iconic rebel actor (Rebel Without a Cause)"},
+  {id:4,name:"Marlon Brando",height:70,bio:"Actor (The Godfather, A Streetcar Named Desire)"},
+  {id:5,name:"Paul Newman",height:71,bio:"Oscar-winning actor (The Color of Money)"},
+  {id:6,name:"Steve McQueen",height:70,bio:"King of Cool, actor (Bullitt)"},
+  {id:7,name:"Jack Nicholson",height:70,bio:"Oscar-winning actor (One Flew Over the Cuckoo's Nest)"},
+  {id:8,name:"Robert De Niro",height:69,bio:"Oscar-winning actor (Raging Bull, Godfather II)"},
+  {id:9,name:"Al Pacino",height:67,bio:"Actor (Scarface, The Godfather)"},
+  {id:10,name:"Dustin Hoffman",height:66,bio:"Oscar-winning actor (Rain Man, Tootsie)"},
+  {id:11,name:"Gene Hackman",height:72,bio:"Oscar-winning actor (The French Connection)"},
+  {id:12,name:"Sidney Poitier",height:74,bio:"First Black Oscar winner for leading role"},
+  {id:13,name:"Gregory Peck",height:75,bio:"Actor (To Kill a Mockingbird)"},
+  {id:14,name:"Spencer Tracy",height:70,bio:"Two-time Oscar-winning actor"},
+  {id:15,name:"Kirk Douglas",height:71,bio:"Actor (Spartacus)"},
+  {id:16,name:"Burt Lancaster",height:74,bio:"Oscar-winning actor (Elmer Gantry)"},
+  {id:17,name:"Charlton Heston",height:75,bio:"Actor (Ben-Hur, The Ten Commandments)"},
+  {id:18,name:"William Holden",height:72,bio:"Oscar-winning actor (Stalag 17)"},
+  {id:19,name:"James Stewart",height:75,bio:"Actor (It's a Wonderful Life)"},
+  {id:20,name:"Henry Fonda",height:74,bio:"Actor (12 Angry Men, On Golden Pond)"},
+  {id:21,name:"Clark Gable",height:73,bio:"King of Hollywood (Gone with the Wind)"},
+  {id:22,name:"Robert Mitchum",height:73,bio:"Actor (Cape Fear, Night of the Hunter)"},
+  {id:23,name:"Yul Brynner",height:70,bio:"Oscar-winning actor (The King and I)"},
+  {id:24,name:"Orson Welles",height:75,bio:"Actor/director (Citizen Kane)"},
+  {id:25,name:"Peter Sellers",height:70,bio:"Actor (Dr. Strangelove, Pink Panther)"},
+  // CLASSIC HOLLYWOOD ACTRESSES
+  {id:26,name:"Audrey Hepburn",height:67,bio:"Oscar-winning actress (Roman Holiday)"},
+  {id:27,name:"Katharine Hepburn",height:68,bio:"Four-time Oscar-winning actress"},
+  {id:28,name:"Marilyn Monroe",height:65,bio:"Iconic actress & pop culture legend"},
+  {id:29,name:"Grace Kelly",height:67,bio:"Oscar-winning actress turned Princess"},
+  {id:30,name:"Bette Davis",height:63,bio:"Two-time Oscar-winning actress"},
+  {id:31,name:"Joan Crawford",height:65,bio:"Oscar-winning actress (Mildred Pierce)"},
+  {id:32,name:"Elizabeth Taylor",height:64,bio:"Two-time Oscar-winning actress"},
+  {id:33,name:"Ingrid Bergman",height:68,bio:"Oscar-winning actress (Casablanca)"},
+  {id:34,name:"Vivien Leigh",height:65,bio:"Oscar-winning actress (Gone with the Wind)"},
+  {id:35,name:"Sophia Loren",height:68,bio:"Oscar-winning Italian actress"},
+  {id:36,name:"Doris Day",height:65,bio:"Actress & singer (Pillow Talk)"},
+  {id:37,name:"Lauren Bacall",height:67,bio:"Actress (To Have and Have Not)"},
+  {id:38,name:"Rita Hayworth",height:65,bio:"Actress (Gilda)"},
+  {id:39,name:"Ava Gardner",height:66,bio:"Actress (The Killers)"},
+  {id:40,name:"Natalie Wood",height:62,bio:"Actress (West Side Story, Rebel Without a Cause)"},
+  // OSCAR-WINNING MODERN ACTORS
+  {id:41,name:"Clint Eastwood",height:74,bio:"Oscar-winning actor/director (Unforgiven)"},
+  {id:42,name:"Denzel Washington",height:71,bio:"Two-time Oscar-winning actor"},
+  {id:43,name:"Tom Hanks",height:72,bio:"Two-time Oscar-winning actor (Forrest Gump)"},
+  {id:44,name:"Anthony Hopkins",height:69,bio:"Oscar-winning actor (Silence of the Lambs)"},
+  {id:45,name:"Daniel Day-Lewis",height:72,bio:"Three-time Oscar-winning actor"},
+  {id:46,name:"Sean Penn",height:69,bio:"Two-time Oscar-winning actor"},
+  {id:47,name:"Russell Crowe",height:72,bio:"Oscar-winning actor (Gladiator)"},
+  {id:48,name:"Geoffrey Rush",height:71,bio:"Oscar-winning actor (Shine)"},
+  {id:49,name:"Kevin Spacey",height:70,bio:"Two-time Oscar-winning actor"},
+  {id:50,name:"Morgan Freeman",height:73,bio:"Oscar-winning actor (Million Dollar Baby)"},
+  {id:51,name:"Gene Wilder",height:71,bio:"Actor (Willy Wonka, Young Frankenstein)"},
+  {id:52,name:"Jon Voight",height:74,bio:"Oscar-winning actor (Coming Home)"},
+  {id:53,name:"Forest Whitaker",height:74,bio:"Oscar-winning actor (The Last King of Scotland)"},
+  {id:54,name:"Adrien Brody",height:73,bio:"Oscar-winning actor (The Pianist)"},
+  {id:55,name:"Jamie Foxx",height:69,bio:"Oscar-winning actor (Ray)"},
+  {id:56,name:"Philip Seymour Hoffman",height:70,bio:"Oscar-winning actor (Capote)"},
+  {id:57,name:"Jeff Bridges",height:74,bio:"Oscar-winning actor (Crazy Heart)"},
+  {id:58,name:"Colin Firth",height:73,bio:"Oscar-winning actor (The King's Speech)"},
+  {id:59,name:"Eddie Redmayne",height:71,bio:"Oscar-winning actor (The Theory of Everything)"},
+  {id:60,name:"Matthew McConaughey",height:71,bio:"Oscar-winning actor (Dallas Buyers Club)"},
+  // OSCAR-WINNING MODERN ACTRESSES
+  {id:61,name:"Meryl Streep",height:65,bio:"Three-time Oscar-winning actress"},
+  {id:62,name:"Cate Blanchett",height:69,bio:"Two-time Oscar-winning actress"},
+  {id:63,name:"Jodie Foster",height:65,bio:"Two-time Oscar-winning actress"},
+  {id:64,name:"Hilary Swank",height:67,bio:"Two-time Oscar-winning actress"},
+  {id:65,name:"Charlize Theron",height:71,bio:"Oscar-winning actress (Monster)"},
+  {id:66,name:"Halle Berry",height:65,bio:"Oscar-winning actress (Monster's Ball)"},
+  {id:67,name:"Nicole Kidman",height:71,bio:"Oscar-winning actress (The Hours)"},
+  {id:68,name:"Reese Witherspoon",height:63,bio:"Oscar-winning actress (Walk the Line)"},
+  {id:69,name:"Julia Roberts",height:67,bio:"Oscar-winning actress (Erin Brockovich)"},
+  {id:70,name:"Sandra Bullock",height:68,bio:"Oscar-winning actress (The Blind Side)"},
+  {id:71,name:"Susan Sarandon",height:67,bio:"Oscar-winning actress (Dead Man Walking)"},
+  {id:72,name:"Gwyneth Paltrow",height:69,bio:"Oscar-winning actress (Shakespeare in Love)"},
+  {id:73,name:"Natalie Portman",height:64,bio:"Oscar-winning actress (Black Swan)"},
+  {id:74,name:"Kathy Bates",height:63,bio:"Oscar-winning actress (Misery)"},
+  {id:75,name:"Helen Hunt",height:64,bio:"Oscar-winning actress (As Good as It Gets)"},
+  {id:76,name:"Helen Mirren",height:64,bio:"Oscar-winning actress (The Queen)"},
+  {id:77,name:"Kate Winslet",height:67,bio:"Oscar-winning actress (The Reader)"},
+  {id:78,name:"Penélope Cruz",height:65,bio:"Oscar-winning actress (Vicky Cristina Barcelona)"},
+  {id:79,name:"Marion Cotillard",height:65,bio:"Oscar-winning actress (La Vie en Rose)"},
+  {id:80,name:"Jennifer Lawrence",height:67,bio:"Oscar-winning actress (Silver Linings Playbook)"},
+  // CULT CLASSIC ACTORS
+  {id:81,name:"Bruce Lee",height:67,bio:"Martial arts legend (Enter the Dragon)"},
+  {id:82,name:"Bruce Willis",height:72,bio:"Actor (Die Hard, Pulp Fiction)"},
+  {id:83,name:"Arnold Schwarzenegger",height:74,bio:"Actor (The Terminator, Predator)"},
+  {id:84,name:"Sylvester Stallone",height:70,bio:"Actor (Rocky, Rambo)"},
+  {id:85,name:"Kurt Russell",height:70,bio:"Cult actor (Escape from New York, The Thing)"},
+  {id:86,name:"John Travolta",height:73,bio:"Actor (Pulp Fiction, Saturday Night Fever)"},
+  {id:87,name:"Samuel L. Jackson",height:72,bio:"Actor (Pulp Fiction, Jackie Brown)"},
+  {id:88,name:"Bill Murray",height:73,bio:"Actor (Ghostbusters, Lost in Translation)"},
+  {id:89,name:"John Cusack",height:73,bio:"Actor (Say Anything, Grosse Pointe Blank)"},
+  {id:90,name:"Jeff Goldblum",height:76,bio:"Actor (The Fly, Jurassic Park)"},
+  {id:91,name:"Tim Curry",height:70,bio:"Actor (The Rocky Horror Picture Show)"},
+  {id:92,name:"Christopher Walken",height:72,bio:"Actor (The Deer Hunter, Pulp Fiction)"},
+  {id:93,name:"Harvey Keitel",height:69,bio:"Actor (Reservoir Dogs, Mean Streets)"},
+  {id:94,name:"Gary Oldman",height:69,bio:"Actor (Leon: The Professional, Dracula)"},
+  {id:95,name:"Dennis Hopper",height:70,bio:"Actor (Easy Rider, Blue Velvet)"},
+  {id:96,name:"Steve Buscemi",height:69,bio:"Actor (Reservoir Dogs, Fargo)"},
+  {id:97,name:"Tim Roth",height:67,bio:"Actor (Reservoir Dogs, Rob Roy)"},
+  {id:98,name:"Michael Madsen",height:73,bio:"Actor (Reservoir Dogs, Kill Bill)"},
+  {id:99,name:"Benicio del Toro",height:73,bio:"Actor (Traffic, Fear and Loathing)"},
+  {id:100,name:"Vincent Price",height:76,bio:"Horror icon (House of Wax, Edward Scissorhands)"},
+  {id:101,name:"Christopher Lee",height:77,bio:"Horror & fantasy icon (Dracula, LOTR)"},
+  {id:102,name:"Peter Cushing",height:72,bio:"Horror icon (Dracula, Star Wars)"},
+  {id:103,name:"Boris Karloff",height:75,bio:"Horror legend (Frankenstein, The Mummy)"},
+  {id:104,name:"Bela Lugosi",height:73,bio:"Horror legend (Dracula)"},
+  // TV ACTORS & ACTRESSES
+  {id:105,name:"Bryan Cranston",height:71,bio:"Actor (Breaking Bad, Malcolm in the Middle)"},
+  {id:106,name:"James Gandolfini",height:72,bio:"Actor (The Sopranos)"},
+  {id:107,name:"David Duchovny",height:74,bio:"Actor (The X-Files)"},
+  {id:108,name:"Gillian Anderson",height:63,bio:"Actress (The X-Files, The Crown)"},
+  {id:109,name:"Jerry Seinfeld",height:71,bio:"Comedian/actor (Seinfeld)"},
+  {id:110,name:"Jason Alexander",height:66,bio:"Actor (Seinfeld — George Costanza)"},
+  {id:111,name:"Michael Richards",height:76,bio:"Actor (Seinfeld — Cosmo Kramer)"},
+  {id:112,name:"Julia Louis-Dreyfus",height:64,bio:"Actress (Seinfeld, Veep)"},
+  {id:113,name:"Ted Danson",height:74,bio:"Actor (Cheers, The Good Place)"},
+  {id:114,name:"Kelsey Grammer",height:73,bio:"Actor (Frasier, Cheers)"},
+  {id:115,name:"David Hyde Pierce",height:71,bio:"Actor (Frasier — Niles Crane)"},
+  {id:116,name:"Matthew Perry",height:72,bio:"Actor (Friends — Chandler Bing)"},
+  {id:117,name:"Matt LeBlanc",height:71,bio:"Actor (Friends — Joey Tribbiani)"},
+  {id:118,name:"David Schwimmer",height:74,bio:"Actor (Friends — Ross Geller)"},
+  {id:119,name:"Jennifer Aniston",height:65,bio:"Actress (Friends — Rachel Green)"},
+  {id:120,name:"Courteney Cox",height:65,bio:"Actress (Friends — Monica Geller)"},
+  {id:121,name:"Lisa Kudrow",height:67,bio:"Actress (Friends — Phoebe Buffay)"},
+  {id:122,name:"Tony Shalhoub",height:68,bio:"Actor (Monk, Wings)"},
+  {id:123,name:"Hugh Laurie",height:75,bio:"Actor (House M.D., Blackadder)"},
+  {id:124,name:"Steve Carell",height:70,bio:"Actor (The Office, The 40-Year-Old Virgin)"},
+  {id:125,name:"John Krasinski",height:74,bio:"Actor (The Office, A Quiet Place)"},
+  {id:126,name:"Ed Helms",height:72,bio:"Actor (The Office, The Hangover)"},
+  {id:127,name:"Rainn Wilson",height:74,bio:"Actor (The Office — Dwight Schrute)"},
+  {id:128,name:"Eugene Levy",height:70,bio:"Actor/comedian (Schitt's Creek, American Pie)"},
+  {id:129,name:"Catherine O'Hara",height:64,bio:"Actress (Schitt's Creek, Home Alone)"},
+  {id:130,name:"Dan Levy",height:73,bio:"Actor/writer (Schitt's Creek)"},
+  {id:131,name:"Jon Hamm",height:74,bio:"Actor (Mad Men — Don Draper)"},
+  {id:132,name:"Aaron Paul",height:69,bio:"Actor (Breaking Bad — Jesse Pinkman)"},
+  {id:133,name:"Bob Odenkirk",height:70,bio:"Actor (Better Call Saul, Mr. Show)"},
+  {id:134,name:"Michael C. Hall",height:70,bio:"Actor (Dexter, Six Feet Under)"},
+  {id:135,name:"Kyle MacLachlan",height:74,bio:"Actor (Twin Peaks, Blue Velvet)"},
+  {id:136,name:"Peter Dinklage",height:57,bio:"Actor (Game of Thrones — Tyrion Lannister)"},
+  {id:137,name:"Emilia Clarke",height:63,bio:"Actress (Game of Thrones — Daenerys)"},
+  {id:138,name:"Kit Harington",height:67,bio:"Actor (Game of Thrones — Jon Snow)"},
+  {id:139,name:"Lena Headey",height:67,bio:"Actress (Game of Thrones — Cersei)"},
+  {id:140,name:"Maisie Williams",height:61,bio:"Actress (Game of Thrones — Arya Stark)"},
+  {id:141,name:"Robin Wright",height:67,bio:"Actress (House of Cards, Forrest Gump)"},
+  // ADDITIONAL FILM ACTORS
+  {id:142,name:"Harrison Ford",height:73,bio:"Actor (Indiana Jones, Star Wars, Blade Runner)"},
+  {id:143,name:"Sean Connery",height:74,bio:"Actor (James Bond, The Untouchables)"},
+  {id:144,name:"Roger Moore",height:74,bio:"Actor (James Bond)"},
+  {id:145,name:"Richard Gere",height:71,bio:"Actor (Pretty Woman, An Officer and a Gentleman)"},
+  {id:146,name:"Mel Gibson",height:71,bio:"Actor/director (Braveheart, Lethal Weapon)"},
+  {id:147,name:"Tom Cruise",height:67,bio:"Actor (Top Gun, Mission: Impossible)"},
+  {id:148,name:"Brad Pitt",height:71,bio:"Oscar-winning actor (Once Upon a Time in Hollywood)"},
+  {id:149,name:"Johnny Depp",height:70,bio:"Actor (Edward Scissorhands, Pirates of the Caribbean)"},
+  {id:150,name:"Nicolas Cage",height:72,bio:"Oscar-winning actor (Leaving Las Vegas)"},
+  {id:151,name:"Jim Carrey",height:75,bio:"Actor (The Truman Show, Eternal Sunshine)"},
+  {id:152,name:"Robin Williams",height:68,bio:"Oscar-winning actor/comedian (Good Will Hunting)"},
+  {id:153,name:"Eddie Murphy",height:69,bio:"Actor/comedian (Beverly Hills Cop)"},
+  {id:154,name:"Chevy Chase",height:74,bio:"Actor/comedian (National Lampoon's Vacation)"},
+  {id:155,name:"Dan Aykroyd",height:73,bio:"Actor/comedian (Ghostbusters, Blues Brothers)"},
+  {id:156,name:"John Belushi",height:67,bio:"Actor/comedian (Animal House, Blues Brothers)"},
+  {id:157,name:"Steve Martin",height:71,bio:"Actor/comedian (The Jerk, L.A. Story)"},
+  {id:158,name:"Woody Allen",height:65,bio:"Actor/director (Annie Hall, Manhattan)"},
+  {id:159,name:"Gene Kelly",height:70,bio:"Actor/dancer (Singin' in the Rain)"},
+  {id:160,name:"Fred Astaire",height:70,bio:"Actor/dancer (Top Hat, Swing Time)"},
+  {id:161,name:"Buster Keaton",height:65,bio:"Silent film legend"},
+  {id:162,name:"Charlie Chaplin",height:65,bio:"Silent film icon (The Kid, Modern Times)"},
+  {id:163,name:"Laurence Olivier",height:72,bio:"Legendary British actor (Hamlet)"},
+  {id:164,name:"Richard Burton",height:70,bio:"Welsh actor (Who's Afraid of Virginia Woolf?)"},
+  {id:165,name:"Peter O'Toole",height:75,bio:"Actor (Lawrence of Arabia)"},
+  {id:166,name:"Michael Caine",height:74,bio:"Two-time Oscar-winning actor"},
+  {id:167,name:"Oliver Reed",height:73,bio:"Actor (Oliver!, Women in Love)"},
+  {id:168,name:"Sigourney Weaver",height:72,bio:"Actress (Alien, Ghostbusters)"},
+  {id:169,name:"Jamie Lee Curtis",height:67,bio:"Actress (Halloween, True Lies)"},
+  {id:170,name:"Sissy Spacek",height:65,bio:"Oscar-winning actress (Coal Miner's Daughter)"},
+  {id:171,name:"Jane Fonda",height:67,bio:"Two-time Oscar-winning actress"},
+  {id:172,name:"Faye Dunaway",height:67,bio:"Oscar-winning actress (Network)"},
+  {id:173,name:"Diane Keaton",height:67,bio:"Oscar-winning actress (Annie Hall)"},
+  {id:174,name:"Goldie Hawn",height:65,bio:"Oscar-winning actress (Cactus Flower)"},
+  {id:175,name:"Barbra Streisand",height:65,bio:"Oscar & Grammy-winning actress/singer"},
+  {id:176,name:"Cher",height:67,bio:"Oscar-winning actress & pop icon"},
+  {id:177,name:"Anjelica Huston",height:70,bio:"Oscar-winning actress (Prizzi's Honor)"},
+  {id:178,name:"Whoopi Goldberg",height:65,bio:"Oscar-winning actress (Ghost)"},
+  {id:179,name:"Geena Davis",height:72,bio:"Oscar-winning actress (The Accidental Tourist)"},
+  {id:180,name:"Demi Moore",height:65,bio:"Actress (Ghost, G.I. Jane)"},
+  {id:181,name:"Sharon Stone",height:67,bio:"Actress (Basic Instinct, Casino)"},
+  {id:182,name:"Kim Basinger",height:67,bio:"Oscar-winning actress (L.A. Confidential)"},
+  {id:183,name:"Michelle Pfeiffer",height:67,bio:"Actress (Scarface, Batman Returns)"},
+  {id:184,name:"Glenn Close",height:65,bio:"Actress (Fatal Attraction, Dangerous Liaisons)"},
+  {id:185,name:"Kathleen Turner",height:68,bio:"Actress (Body Heat, Romancing the Stone)"},
+  // 80s & 90s MUSICIANS
+  {id:186,name:"David Bowie",height:71,bio:"Rock legend (Ziggy Stardust, Space Oddity)"},
+  {id:187,name:"Freddie Mercury",height:69,bio:"Queen frontman & rock legend"},
+  {id:188,name:"Elvis Presley",height:72,bio:"King of Rock and Roll"},
+  {id:189,name:"Mick Jagger",height:70,bio:"Rolling Stones frontman"},
+  {id:190,name:"Keith Richards",height:70,bio:"Rolling Stones guitarist"},
+  {id:191,name:"Robert Plant",height:72,bio:"Led Zeppelin vocalist"},
+  {id:192,name:"Jimmy Page",height:71,bio:"Led Zeppelin guitarist"},
+  {id:193,name:"Roger Daltrey",height:68,bio:"The Who frontman"},
+  {id:194,name:"Pete Townshend",height:73,bio:"The Who guitarist/songwriter"},
+  {id:195,name:"Gary Numan",height:68,bio:"Synth-pop pioneer (Cars, Are Friends Electric?)"},
+  {id:196,name:"Sid Vicious",height:73,bio:"Sex Pistols bassist & punk icon"},
+  {id:197,name:"John Lydon",height:70,bio:"Sex Pistols frontman (Johnny Rotten)"},
+  {id:198,name:"Joe Strummer",height:69,bio:"The Clash frontman"},
+  {id:199,name:"Mick Jones",height:70,bio:"The Clash guitarist"},
+  {id:200,name:"Paul Simonon",height:73,bio:"The Clash bassist"},
+  {id:201,name:"Ian Curtis",height:71,bio:"Joy Division vocalist"},
+  {id:202,name:"Bernard Sumner",height:70,bio:"New Order/Joy Division guitarist"},
+  {id:203,name:"Peter Hook",height:72,bio:"New Order/Joy Division bassist"},
+  {id:204,name:"Robert Smith",height:69,bio:"The Cure frontman"},
+  {id:205,name:"Morrissey",height:72,bio:"The Smiths vocalist"},
+  {id:206,name:"Johnny Marr",height:69,bio:"The Smiths guitarist"},
+  {id:207,name:"Elvis Costello",height:70,bio:"Singer/songwriter (Alison, Pump It Up)"},
+  {id:208,name:"Nick Cave",height:74,bio:"Nick Cave & the Bad Seeds frontman"},
+  {id:209,name:"Shane MacGowan",height:69,bio:"The Pogues vocalist"},
+  {id:210,name:"Siouxsie Sioux",height:67,bio:"Siouxsie and the Banshees frontwoman"},
+  {id:211,name:"Debbie Harry",height:65,bio:"Blondie frontwoman"},
+  {id:212,name:"Patti Smith",height:67,bio:"Punk poet & rock musician"},
+  {id:213,name:"Joan Jett",height:63,bio:"Rocker (I Love Rock 'n' Roll)"},
+  {id:214,name:"Chrissie Hynde",height:66,bio:"The Pretenders frontwoman"},
+  {id:215,name:"Sting",height:71,bio:"The Police frontman & solo artist"},
+  {id:216,name:"Andy Summers",height:72,bio:"The Police guitarist"},
+  {id:217,name:"Stewart Copeland",height:72,bio:"The Police drummer"},
+  {id:218,name:"Bono",height:67,bio:"U2 frontman"},
+  {id:219,name:"The Edge",height:70,bio:"U2 guitarist"},
+  {id:220,name:"Billy Idol",height:71,bio:"Solo rocker (Rebel Yell, White Wedding)"},
+  {id:221,name:"Adam Ant",height:69,bio:"New Wave icon (Goody Two Shoes)"},
+  {id:222,name:"Boy George",height:71,bio:"Culture Club frontman"},
+  {id:223,name:"George Michael",height:70,bio:"Wham! & solo pop icon"},
+  {id:224,name:"Simon Le Bon",height:71,bio:"Duran Duran vocalist"},
+  {id:225,name:"Nick Rhodes",height:68,bio:"Duran Duran keyboardist"},
+  {id:226,name:"Howard Jones",height:68,bio:"Synth-pop musician (New Song)"},
+  {id:227,name:"Thomas Dolby",height:72,bio:"Musician (She Blinded Me with Science)"},
+  {id:228,name:"Roland Orzabal",height:70,bio:"Tears for Fears co-founder"},
+  {id:229,name:"Curt Smith",height:69,bio:"Tears for Fears co-founder"},
+  {id:230,name:"Martin Gore",height:67,bio:"Depeche Mode songwriter/guitarist"},
+  {id:231,name:"Dave Gahan",height:73,bio:"Depeche Mode vocalist"},
+  {id:232,name:"Vince Clarke",height:70,bio:"Depeche Mode/Erasure founder"},
+  {id:233,name:"Andy Bell",height:71,bio:"Erasure vocalist"},
+  {id:234,name:"Marc Almond",height:65,bio:"Soft Cell vocalist (Tainted Love)"},
+  {id:235,name:"Midge Ure",height:67,bio:"Ultravox frontman (Vienna)"},
+  {id:236,name:"Annie Lennox",height:66,bio:"Eurythmics vocalist"},
+  {id:237,name:"Dave Stewart",height:74,bio:"Eurythmics guitarist/songwriter"},
+  {id:238,name:"Kate Bush",height:63,bio:"Singer/songwriter (Wuthering Heights, Running Up That Hill)"},
+  {id:239,name:"Björk",height:61,bio:"Icelandic singer/songwriter"},
+  {id:240,name:"PJ Harvey",height:67,bio:"Singer/songwriter (Dry, Rid of Me)"},
+  {id:241,name:"Tori Amos",height:64,bio:"Singer/songwriter (Little Earthquakes)"},
+  {id:242,name:"Sinéad O'Connor",height:66,bio:"Singer (Nothing Compares 2 U)"},
+  {id:243,name:"Tracy Chapman",height:65,bio:"Singer/songwriter (Fast Car)"},
+  {id:244,name:"Suzanne Vega",height:63,bio:"Singer/songwriter (Luka, Tom's Diner)"},
+  {id:245,name:"Natalie Merchant",height:65,bio:"10,000 Maniacs/solo vocalist"},
+  {id:246,name:"Liz Phair",height:65,bio:"Alternative singer/songwriter (Exile in Guyville)"},
+  {id:247,name:"Courtney Love",height:66,bio:"Hole vocalist"},
+  {id:248,name:"Shirley Manson",height:67,bio:"Garbage vocalist"},
+  {id:249,name:"Dolores O'Riordan",height:64,bio:"The Cranberries vocalist"},
+  {id:250,name:"Gwen Stefani",height:66,bio:"No Doubt vocalist"},
+  {id:251,name:"Alanis Morissette",height:65,bio:"Singer/songwriter (Jagged Little Pill)"},
+  {id:252,name:"Fiona Apple",height:65,bio:"Singer/songwriter (Tidal)"},
+  {id:253,name:"Sarah McLachlan",height:65,bio:"Singer/songwriter (Angel, Possession)"},
+  // GRUNGE & ALTERNATIVE 90s
+  {id:254,name:"Kurt Cobain",height:69,bio:"Nirvana frontman"},
+  {id:255,name:"Dave Grohl",height:73,bio:"Nirvana/Foo Fighters drummer/frontman"},
+  {id:256,name:"Krist Novoselic",height:79,bio:"Nirvana bassist"},
+  {id:257,name:"Eddie Vedder",height:69,bio:"Pearl Jam vocalist"},
+  {id:258,name:"Chris Cornell",height:74,bio:"Soundgarden/Audioslave vocalist"},
+  {id:259,name:"Layne Staley",height:71,bio:"Alice in Chains vocalist"},
+  {id:260,name:"Jerry Cantrell",height:73,bio:"Alice in Chains guitarist"},
+  {id:261,name:"Scott Weiland",height:71,bio:"Stone Temple Pilots vocalist"},
+  {id:262,name:"Billy Corgan",height:75,bio:"Smashing Pumpkins frontman"},
+  {id:263,name:"Trent Reznor",height:68,bio:"Nine Inch Nails founder"},
+  {id:264,name:"Thom Yorke",height:66,bio:"Radiohead vocalist/frontman"},
+  {id:265,name:"Jonny Greenwood",height:70,bio:"Radiohead guitarist"},
+  {id:266,name:"Damon Albarn",height:71,bio:"Blur/Gorillaz frontman"},
+  {id:267,name:"Liam Gallagher",height:71,bio:"Oasis vocalist"},
+  {id:268,name:"Noel Gallagher",height:69,bio:"Oasis guitarist/songwriter"},
+  {id:269,name:"Brett Anderson",height:72,bio:"Suede vocalist"},
+  {id:270,name:"Jarvis Cocker",height:76,bio:"Pulp vocalist/frontman"},
+  {id:271,name:"Beck Hansen",height:70,bio:"Musician (Loser, Where It's At)"},
+  {id:272,name:"Rivers Cuomo",height:67,bio:"Weezer frontman"},
+  {id:273,name:"Kim Deal",height:63,bio:"Pixies/Breeders bassist/vocalist"},
+  {id:274,name:"Black Francis",height:68,bio:"Pixies frontman"},
+  {id:275,name:"Thurston Moore",height:77,bio:"Sonic Youth guitarist/vocalist"},
+  {id:276,name:"Kim Gordon",height:68,bio:"Sonic Youth bassist/vocalist"},
+  {id:277,name:"Stephen Malkmus",height:73,bio:"Pavement vocalist/guitarist"},
+  {id:278,name:"Mark Lanegan",height:74,bio:"Screaming Trees vocalist"},
+  {id:279,name:"Evan Dando",height:72,bio:"Lemonheads vocalist"},
+  {id:280,name:"Lou Barlow",height:69,bio:"Sebadoh/Dinosaur Jr musician"},
+  // MORE 80s ROCK
+  {id:281,name:"Peter Gabriel",height:71,bio:"Genesis/solo artist (Sledgehammer)"},
+  {id:282,name:"Phil Collins",height:67,bio:"Genesis drummer/vocalist"},
+  {id:283,name:"Roger Waters",height:74,bio:"Pink Floyd bassist/lyricist"},
+  {id:284,name:"David Gilmour",height:72,bio:"Pink Floyd guitarist/vocalist"},
+  {id:285,name:"Syd Barrett",height:71,bio:"Pink Floyd founder"},
+  {id:286,name:"Ozzy Osbourne",height:68,bio:"Black Sabbath vocalist/solo artist"},
+  {id:287,name:"Tony Iommi",height:73,bio:"Black Sabbath guitarist"},
+  {id:288,name:"Ronnie James Dio",height:65,bio:"Black Sabbath/Dio vocalist"},
+  {id:289,name:"Bruce Dickinson",height:71,bio:"Iron Maiden vocalist"},
+  {id:290,name:"Steve Harris",height:71,bio:"Iron Maiden bassist/founder"},
+  {id:291,name:"James Hetfield",height:72,bio:"Metallica vocalist/guitarist"},
+  {id:292,name:"Lars Ulrich",height:67,bio:"Metallica drummer/co-founder"},
+  {id:293,name:"Axl Rose",height:70,bio:"Guns N' Roses vocalist"},
+  {id:294,name:"Slash",height:71,bio:"Guns N' Roses guitarist"},
+  {id:295,name:"Duff McKagan",height:75,bio:"Guns N' Roses bassist"},
+  {id:296,name:"Jon Bon Jovi",height:70,bio:"Bon Jovi vocalist (Livin' on a Prayer)"},
+  {id:297,name:"Tom Petty",height:72,bio:"Rock musician (Free Fallin', American Girl)"},
+  {id:298,name:"Don Henley",height:69,bio:"Eagles drummer/vocalist"},
+  {id:299,name:"Glenn Frey",height:70,bio:"Eagles guitarist/vocalist"},
+  // POST-PUNK & INDIE
+  {id:300,name:"Mark Mothersbaugh",height:67,bio:"Devo frontman"},
+  {id:301,name:"David Byrne",height:74,bio:"Talking Heads frontman"},
+  {id:302,name:"Tina Weymouth",height:64,bio:"Talking Heads bassist"},
+  {id:303,name:"Chris Stein",height:72,bio:"Blondie guitarist/co-founder"},
+  {id:304,name:"Glenn Danzig",height:66,bio:"Misfits/Danzig vocalist"},
+  {id:305,name:"Henry Rollins",height:70,bio:"Black Flag/Rollins Band vocalist"},
+  {id:306,name:"Jello Biafra",height:74,bio:"Dead Kennedys vocalist"},
+  {id:307,name:"Paul Weller",height:69,bio:"The Jam/Style Council frontman"},
+  {id:308,name:"Ian McCulloch",height:70,bio:"Echo & the Bunnymen vocalist"},
+  {id:309,name:"Will Sergeant",height:71,bio:"Echo & the Bunnymen guitarist"},
+  {id:310,name:"Martin Fry",height:71,bio:"ABC vocalist (The Lexicon of Love)"},
+  {id:311,name:"Trevor Horn",height:70,bio:"Buggles/producer (Video Killed the Radio Star)"},
+  {id:312,name:"John Foxx",height:70,bio:"Ultravox founder"},
+  {id:313,name:"Lou Reed",height:70,bio:"Velvet Underground/solo (Walk on the Wild Side)"},
+  {id:314,name:"Iggy Pop",height:67,bio:"The Stooges frontman & punk godfather"},
+  {id:315,name:"Tom Verlaine",height:72,bio:"Television guitarist/vocalist"},
+  {id:316,name:"Richard Hell",height:71,bio:"Punk bassist/vocalist"},
+  {id:317,name:"Nick Lowe",height:71,bio:"Pub rock/new wave (Cruel to Be Kind)"},
+  {id:318,name:"Chris Difford",height:69,bio:"Squeeze guitarist/songwriter"},
+  {id:319,name:"Glenn Tilbrook",height:70,bio:"Squeeze vocalist/guitarist"},
+  {id:320,name:"Suggs",height:70,bio:"Madness vocalist"},
+  {id:321,name:"Terry Hall",height:70,bio:"The Specials vocalist"},
+  {id:322,name:"Joe Jackson",height:73,bio:"Musician (Is She Really Going Out with Him?)"},
+  {id:323,name:"Ian Dury",height:66,bio:"Blockheads frontman (Hit Me with Your Rhythm Stick)"},
+  {id:324,name:"Andy Partridge",height:71,bio:"XTC vocalist/guitarist"},
+  {id:325,name:"Captain Sensible",height:68,bio:"The Damned guitarist (Happy Talk)"},
+  {id:326,name:"Dave Vanian",height:72,bio:"The Damned vocalist"},
+  // SOUL, FUNK & R&B LEGENDS
+  {id:327,name:"James Brown",height:66,bio:"Godfather of Soul"},
+  {id:328,name:"Marvin Gaye",height:71,bio:"Soul legend (What's Going On, Let's Get It On)"},
+  {id:329,name:"Stevie Wonder",height:70,bio:"Soul/pop legend (Superstition, Sir Duke)"},
+  {id:330,name:"Aretha Franklin",height:65,bio:"Queen of Soul"},
+  {id:331,name:"Ray Charles",height:70,bio:"Soul/R&B legend (Hit the Road Jack)"},
+  {id:332,name:"Otis Redding",height:72,bio:"Soul singer (Dock of the Bay)"},
+  {id:333,name:"Al Green",height:69,bio:"Soul singer (Let's Stay Together)"},
+  {id:334,name:"Sam Cooke",height:71,bio:"Soul/pop pioneer (A Change Is Gonna Come)"},
+  // MORE TV & COMEDIANS
+  {id:335,name:"John Cleese",height:78,bio:"Monty Python/Fawlty Towers comedian"},
+  {id:336,name:"Eric Idle",height:72,bio:"Monty Python comedian/actor"},
+  {id:337,name:"Michael Palin",height:71,bio:"Monty Python comedian/traveler"},
+  {id:338,name:"Terry Gilliam",height:72,bio:"Monty Python animator/director"},
+  {id:339,name:"Graham Chapman",height:73,bio:"Monty Python comedian"},
+  {id:340,name:"Rowan Atkinson",height:72,bio:"Mr. Bean/Blackadder comedian"},
+  {id:341,name:"Peter Cook",height:76,bio:"British comedian/satirist"},
+  {id:342,name:"Dudley Moore",height:63,bio:"British comedian/actor (Arthur)"},
+  {id:343,name:"Ronnie Barker",height:69,bio:"British comedian (Porridge, Open All Hours)"},
+  {id:344,name:"Benny Hill",height:70,bio:"British comedian/entertainer"},
+  {id:345,name:"Bob Newhart",height:71,bio:"Comedian/actor (The Bob Newhart Show)"},
+  {id:346,name:"Garry Shandling",height:73,bio:"Comedian (The Larry Sanders Show)"},
+  {id:347,name:"Larry David",height:71,bio:"Comedian/writer (Curb Your Enthusiasm)"},
+  {id:348,name:"Richard Pryor",height:68,bio:"Stand-up legend"},
+  {id:349,name:"George Carlin",height:70,bio:"Legendary stand-up comedian"},
+  // MORE CULT FILM & INDIE ACTORS
+  {id:350,name:"John Malkovich",height:72,bio:"Actor (Being John Malkovich, Dangerous Liaisons)"},
+  {id:351,name:"William H. Macy",height:71,bio:"Actor (Fargo, Shameless)"},
+  {id:352,name:"Edward Norton",height:72,bio:"Actor (Fight Club, American History X)"},
+  {id:353,name:"Jared Leto",height:69,bio:"Actor/musician (Fight Club, Dallas Buyers Club)"},
+  {id:354,name:"Cillian Murphy",height:70,bio:"Actor (Peaky Blinders, Oppenheimer)"},
+  {id:355,name:"Paul Bettany",height:75,bio:"Actor (A Beautiful Mind, WandaVision)"},
+  {id:356,name:"Jude Law",height:71,bio:"Actor (The Talented Mr. Ripley)"},
+  {id:357,name:"Ewan McGregor",height:70,bio:"Actor (Trainspotting, Moulin Rouge)"},
+  {id:358,name:"Robert Carlyle",height:68,bio:"Actor (Trainspotting, The Full Monty)"},
+  {id:359,name:"James McAvoy",height:68,bio:"Actor (Atonement, Split)"},
+  {id:360,name:"Michael Fassbender",height:72,bio:"Actor (Shame, 12 Years a Slave)"},
+  {id:361,name:"Idris Elba",height:74,bio:"Actor (The Wire, Luther)"},
+  {id:362,name:"Clive Owen",height:73,bio:"Actor (Closer, Children of Men)"},
+  {id:363,name:"Ralph Fiennes",height:72,bio:"Actor (The English Patient, Schindler's List)"},
+  {id:364,name:"Jeremy Irons",height:73,bio:"Oscar-winning actor (Reversal of Fortune)"},
+  {id:365,name:"Bob Hoskins",height:65,bio:"Actor (The Long Good Friday, Who Framed Roger Rabbit)"},
+  // DIRECTORS
+  {id:366,name:"Quentin Tarantino",height:74,bio:"Director/actor (Pulp Fiction, Inglourious Basterds)"},
+  {id:367,name:"Martin Scorsese",height:63,bio:"Director (Goodfellas, Taxi Driver)"},
+  {id:368,name:"Francis Ford Coppola",height:73,bio:"Director (The Godfather, Apocalypse Now)"},
+  {id:369,name:"Alfred Hitchcock",height:71,bio:"Director (Psycho, Rear Window)"},
+  // CLASSIC FILM & TV LEGENDS
+  {id:370,name:"James Coburn",height:75,bio:"Oscar-winning actor (Affliction)"},
+  {id:371,name:"Lee Marvin",height:75,bio:"Oscar-winning actor (Cat Ballou)"},
+  {id:372,name:"Telly Savalas",height:72,bio:"Actor (Kojak)"},
+  {id:373,name:"Rod Steiger",height:71,bio:"Oscar-winning actor (In the Heat of the Night)"},
+  {id:374,name:"George C. Scott",height:72,bio:"Actor (Patton) — refused his Oscar"},
+  {id:375,name:"Walter Matthau",height:74,bio:"Oscar-winning actor (The Fortune Cookie)"},
+  {id:376,name:"Jack Lemmon",height:70,bio:"Two-time Oscar-winning actor (Save the Tiger)"},
+  {id:377,name:"Tony Curtis",height:71,bio:"Actor (Some Like It Hot)"},
+  {id:378,name:"Dean Martin",height:72,bio:"Rat Pack actor/singer"},
+  {id:379,name:"Frank Sinatra",height:70,bio:"Oscar-winning actor/singer (From Here to Eternity)"},
+  {id:380,name:"Sammy Davis Jr.",height:65,bio:"Rat Pack entertainer/actor"},
+  {id:381,name:"Peter Falk",height:70,bio:"Actor (Columbo)"},
+  {id:382,name:"Carroll O'Connor",height:71,bio:"Actor (All in the Family — Archie Bunker)"},
+  {id:383,name:"Dick Van Dyke",height:74,bio:"Actor/comedian (The Dick Van Dyke Show)"},
+  {id:384,name:"Andy Griffith",height:73,bio:"Actor/comedian (The Andy Griffith Show)"},
+  {id:385,name:"Don Knotts",height:68,bio:"Actor (Barney Fife, The Andy Griffith Show)"},
+  {id:386,name:"Bob Hope",height:71,bio:"Legendary entertainer/comedian"},
+  {id:387,name:"Bing Crosby",height:69,bio:"Actor/singer (White Christmas)"},
+  {id:388,name:"Danny Kaye",height:73,bio:"Actor/comedian (The Court Jester)"},
+  {id:389,name:"Jerry Lewis",height:70,bio:"Comedian/actor (The Nutty Professor)"},
+  {id:390,name:"Don Rickles",height:68,bio:"Insult comedian/actor (Kelly's Heroes)"},
+  {id:391,name:"Jonathan Winters",height:71,bio:"Improv comedian/actor"},
+  {id:392,name:"Sid Caesar",height:73,bio:"TV comedy legend (Your Show of Shows)"},
+  {id:393,name:"Milton Berle",height:73,bio:"Mr. Television, pioneering TV comedian"},
+  {id:394,name:"Jack Benny",height:71,bio:"Radio & TV comedian"},
+  {id:395,name:"Red Skelton",height:73,bio:"Clown/comedian/TV star"},
+  {id:396,name:"George Burns",height:67,bio:"Comedian/actor (Oh, God!)"},
+  {id:397,name:"Lou Costello",height:65,bio:"Abbott & Costello comedian"},
+  {id:398,name:"Bud Abbott",height:70,bio:"Abbott & Costello comedian"},
+  {id:399,name:"Stan Laurel",height:68,bio:"Laurel & Hardy comedian"},
+  {id:400,name:"Oliver Hardy",height:73,bio:"Laurel & Hardy comedian"},
+  {id:401,name:"Groucho Marx",height:68,bio:"Marx Brothers comedian/actor"},
+  {id:402,name:"W.C. Fields",height:71,bio:"Comic actor (It's a Gift)"},
+  {id:403,name:"Mae West",height:64,bio:"Actress/comedian (She Done Him Wrong)"},
+  {id:404,name:"Judy Garland",height:62,bio:"Actress/singer (The Wizard of Oz)"},
+  {id:405,name:"Marlene Dietrich",height:67,bio:"Actress (The Blue Angel, Morocco)"},
+  {id:406,name:"Greta Garbo",height:68,bio:"Classic Hollywood actress (Grand Hotel)"},
+  {id:407,name:"Hedy Lamarr",height:67,bio:"Actress & inventor"},
+  {id:408,name:"Gene Tierney",height:66,bio:"Actress (Laura, Leave Her to Heaven)"},
+  // BONUS MUSICIANS
+  {id:409,name:"Paul McCartney",height:70,bio:"The Beatles bassist/vocalist"},
+  {id:410,name:"John Lennon",height:71,bio:"The Beatles vocalist/rhythm guitarist"},
+  {id:411,name:"George Harrison",height:71,bio:"The Beatles lead guitarist"},
+  {id:412,name:"Ringo Starr",height:67,bio:"The Beatles drummer"},
+  {id:413,name:"Bob Dylan",height:69,bio:"Singer/songwriter (Blowin' in the Wind)"},
+  {id:414,name:"Neil Young",height:72,bio:"Singer/songwriter (Heart of Gold, Rockin' in the Free World)"},
+  {id:415,name:"Bruce Springsteen",height:70,bio:"The Boss (Born to Run, Dancing in the Dark)"},
+  {id:416,name:"Eric Clapton",height:71,bio:"Guitar legend (Layla, Tears in Heaven)"},
+  {id:417,name:"Jimi Hendrix",height:70,bio:"Guitar icon (Purple Haze, All Along the Watchtower)"},
+  {id:418,name:"Janis Joplin",height:65,bio:"Rock/blues vocalist (Me and Bobby McGee)"},
+  {id:419,name:"Jim Morrison",height:71,bio:"The Doors vocalist (Light My Fire)"},
+  {id:420,name:"Ray Manzarek",height:73,bio:"The Doors keyboardist"},
+  {id:421,name:"Carlos Santana",height:68,bio:"Guitarist (Black Magic Woman, Smooth)"},
+  {id:422,name:"Stevie Nicks",height:65,bio:"Fleetwood Mac vocalist/songwriter"},
+  {id:423,name:"Lindsey Buckingham",height:71,bio:"Fleetwood Mac guitarist/vocalist"},
+  {id:424,name:"Christine McVie",height:66,bio:"Fleetwood Mac vocalist/keyboardist"},
+  {id:425,name:"Mick Fleetwood",height:78,bio:"Fleetwood Mac drummer/co-founder"},
+  {id:426,name:"John McVie",height:70,bio:"Fleetwood Mac bassist"},
+  {id:427,name:"Rod Stewart",height:71,bio:"Rock vocalist (Maggie May, Do Ya Think I'm Sexy?)"},
+  {id:428,name:"Elton John",height:67,bio:"Piano rock legend (Rocket Man, Tiny Dancer)"},
+  {id:429,name:"Freddie Mercury",height:69,bio:"Queen frontman"},
+  {id:430,name:"Brian May",height:74,bio:"Queen guitarist"},
+  {id:431,name:"Roger Taylor",height:70,bio:"Queen drummer"},
+  {id:432,name:"John Deacon",height:71,bio:"Queen bassist"},
+  {id:433,name:"Lenny Kaye",height:71,bio:"Patti Smith Group guitarist"},
+  {id:434,name:"Television Personalities",height:70,bio:"Dan Treacy — lo-fi indie icon"},
+  {id:435,name:"Edwyn Collins",height:72,bio:"Orange Juice vocalist (A Girl Like You)"},
+  {id:436,name:"Lloyd Cole",height:72,bio:"Singer/songwriter (Perfect Skin)"},
+  {id:437,name:"Roddy Frame",height:68,bio:"Aztec Camera frontman"},
+  {id:438,name:"Billy Mackenzie",height:70,bio:"The Associates vocalist"},
+  {id:439,name:"Marc Bolan",height:65,bio:"T. Rex frontman (Bang a Gong)"},
+  {id:440,name:"Bryan Ferry",height:73,bio:"Roxy Music frontman"},
+  {id:441,name:"Brian Eno",height:71,bio:"Roxy Music/solo ambient artist"},
+  {id:442,name:"Phil Oakey",height:74,bio:"Human League vocalist (Don't You Want Me)"},
+  {id:443,name:"Martyn Ware",height:70,bio:"Heaven 17/Human League co-founder"},
+  {id:444,name:"Glenn Gregory",height:71,bio:"Heaven 17 vocalist"},
+  {id:445,name:"John Taylor",height:74,bio:"Duran Duran bassist"},
+  {id:446,name:"Roger Taylor",height:70,bio:"Duran Duran drummer"},
+  {id:447,name:"Sade Adu",height:68,bio:"Sade vocalist (Smooth Operator)"},
+  {id:448,name:"Grace Jones",height:71,bio:"Singer/model/actress (Slave to the Rhythm)"},
+  {id:449,name:"Nina Hagen",height:67,bio:"Punk/new wave vocalist"},
+  {id:450,name:"Lene Lovich",height:65,bio:"New wave vocalist (Lucky Number)"},
+  {id:451,name:"Alison Moyet",height:66,bio:"Yazoo/solo vocalist (Only You)"},
+  {id:452,name:"Vince Clarke",height:70,bio:"Yazoo/Erasure/Depeche Mode founder"},
+  {id:453,name:"Feargal Sharkey",height:69,bio:"The Undertones vocalist (Teenage Kicks)"},
+  {id:454,name:"John Peel",height:74,bio:"BBC DJ & music champion"},
+  {id:455,name:"Mark E. Smith",height:70,bio:"The Fall frontman"},
+  {id:456,name:"Gang of Four",height:72,bio:"Andy Gill — Gang of Four guitarist"},
+  {id:457,name:"Wire",height:70,bio:"Colin Newman — Wire vocalist/guitarist"},
+  {id:458,name:"Howard Devoto",height:69,bio:"Magazine/Buzzcocks vocalist"},
+  {id:459,name:"Pete Shelley",height:67,bio:"Buzzcocks vocalist/guitarist"},
+  {id:460,name:"Steve Diggle",height:69,bio:"Buzzcocks guitarist"},
+  {id:461,name:"Vic Godard",height:70,bio:"Subway Sect vocalist"},
+  {id:462,name:"Wreckless Eric",height:69,bio:"Musician (Whole Wide World)"},
+  {id:463,name:"Billy Bragg",height:70,bio:"Political folk/punk musician"},
+  {id:464,name:"The Housemartins",height:71,bio:"Paul Heaton — Housemartins vocalist"},
+  {id:465,name:"Paul Heaton",height:71,bio:"Housemartins/Beautiful South vocalist"},
+  {id:466,name:"Shaun Ryder",height:71,bio:"Happy Mondays vocalist"},
+  {id:467,name:"Bez",height:71,bio:"Happy Mondays dancer/percussionist"},
+  {id:468,name:"Ian Brown",height:70,bio:"Stone Roses vocalist"},
+  {id:469,name:"John Squire",height:70,bio:"Stone Roses guitarist"},
+  {id:470,name:"Mani",height:70,bio:"Stone Roses bassist"},
+  {id:471,name:"Tim Burgess",height:69,bio:"The Charlatans vocalist"},
+  {id:472,name:"Mark Collins",height:70,bio:"The Charlatans guitarist"},
+  {id:473,name:"Bernard Butler",height:71,bio:"Suede guitarist"},
+  {id:474,name:"Justine Frischmann",height:66,bio:"Elastica vocalist"},
+  {id:475,name:"Louise Wener",height:65,bio:"Sleeper vocalist"},
+  {id:476,name:"Catatonia",height:64,bio:"Cerys Matthews — Catatonia vocalist"},
+  {id:477,name:"Cerys Matthews",height:64,bio:"Catatonia vocalist (Mulder and Scully)"},
+  {id:478,name:"Manic Street Preachers",height:70,bio:"James Dean Bradfield — Manics vocalist"},
+  {id:479,name:"James Dean Bradfield",height:70,bio:"Manic Street Preachers vocalist/guitarist"},
+  {id:480,name:"Richey Edwards",height:70,bio:"Manic Street Preachers lyricist/guitarist"},
+  {id:481,name:"Massive Attack",height:71,bio:"3D — Massive Attack co-founder"},
+  {id:482,name:"Tricky",height:68,bio:"Trip-hop artist (Maxinquaye)"},
+  {id:483,name:"Portishead",height:65,bio:"Beth Gibbons — Portishead vocalist"},
+  {id:484,name:"Beth Gibbons",height:65,bio:"Portishead vocalist"},
+  {id:485,name:"Goldie",height:71,bio:"Drum and bass pioneer"},
+  {id:486,name:"Aphex Twin",height:71,bio:"Richard D. James — electronic music artist"},
+  {id:487,name:"The Prodigy",height:70,bio:"Keith Flint — The Prodigy dancer/vocalist"},
+  {id:488,name:"Keith Flint",height:70,bio:"The Prodigy vocalist/dancer"},
+  {id:489,name:"Orbital",height:72,bio:"Phil Hartnoll — Orbital co-founder"},
+  {id:490,name:"Chemical Brothers",height:73,bio:"Tom Rowlands — Chemical Brothers co-founder"},
+  // FINAL 10
+  {id:491,name:"Badly Drawn Boy",height:68,bio:"Damon Gough — singer/songwriter (The Hour of Bewilderbeast)"},
+  {id:492,name:"Elliot Smith",height:68,bio:"Singer/songwriter (Miss Misery, Between the Bars)"},
+  {id:493,name:"Jeff Buckley",height:70,bio:"Singer/songwriter (Hallelujah, Last Goodbye)"},
+  {id:494,name:"Nick Drake",height:73,bio:"Singer/songwriter (Pink Moon, River Man)"},
+  {id:495,name:"Sandy Denny",height:65,bio:"Fairport Convention vocalist"},
+  {id:496,name:"Richard Thompson",height:72,bio:"Fairport Convention guitarist/songwriter"},
+  {id:497,name:"Van Morrison",height:67,bio:"Singer/songwriter (Brown Eyed Girl, Moondance)"},
+  {id:498,name:"Tom Waits",height:71,bio:"Singer/songwriter/actor (Rain Dogs)"},
+  {id:499,name:"Leonard Cohen",height:70,bio:"Poet/singer/songwriter (Hallelujah, Suzanne)"},
+  {id:500,name:"Lou Reed",height:70,bio:"Velvet Underground/solo (Perfect Day, Walk on the Wild Side)"},
+];
+
+// ── State ──────────────────────────────────────────────────────────────
+let state = {
+  celebs: [...CELEBS],
+  favorites: new Set(),
+  tab: 'all',        // all | favorites | shorter
+  search: '',
+  sortDir: 'desc',
+  showAdd: false,
+  confirmDel: null,
+  newName: '', newFeet: '', newInches: '', newBio: '',
+  lookSt: 'idle',   // idle | loading | success | error
+  lookMsg: '',
+};
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+// ── Lookup ─────────────────────────────────────────────────────────────
+async function lookupCelebrity(name) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 80,
+      messages: [{
+        role: 'user',
+        content: `How tall is ${name} and what are they known for? Reply in exactly this format:\nFEET: 5\nINCHES: 10\nJOB: Actor and comedian`,
+      }],
+    }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e?.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const text = (data?.content?.[0]?.text || '').trim();
+  const fM = text.match(/FEET:\s*(\d+)/i);
+  const iM = text.match(/INCHES:\s*([\d.]+)/i);
+  const jM = text.match(/JOB:\s*(.+)/i);
+  if (!fM || !iM) throw new Error('Could not parse response. Enter height manually.');
+  return { feet: parseInt(fM[1], 10), inches: parseFloat(iM[1]), bio: jM ? jM[1].trim() : '' };
+}
+
+// ── Computed ───────────────────────────────────────────────────────────
+function getFiltered() {
+  let list = [...state.celebs];
+  if (state.tab === 'shorter')   list = list.filter(c => c.height < HEIDI);
+  if (state.tab === 'favorites') list = list.filter(c => state.favorites.has(c.id));
+  if (state.search.trim())       list = list.filter(c => c.name.toLowerCase().includes(state.search.toLowerCase()));
+  list.sort((a, b) => state.sortDir === 'desc' ? b.height - a.height : a.height - b.height);
+  return list;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function render() {
+  const filtered = getFiltered();
+  const app = document.getElementById('app');
+
+  app.innerHTML = `
+  <div style="width:32px;min-height:100vh;background:#1a1a2e;border-right:1px solid #2d2d50;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding-top:8px;" id="ruler"></div>
+
+  <div style="flex:1;display:flex;flex-direction:column;max-width:600px;margin:0 auto;padding:0 12px;width:100%">
+
+    <!-- Header -->
+    <div style="text-align:center;padding:24px 0 16px">
+      <svg width="80" height="60" viewBox="0 0 80 60" fill="none">
+        <ellipse cx="26" cy="9" rx="6" ry="6" fill="#7c9eff" opacity="0.85"/>
+        <rect x="20" y="16" width="12" height="18" rx="3" fill="#7c9eff" opacity="0.85"/>
+        <rect x="14" y="17" width="5" height="13" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+        <rect x="33" y="17" width="5" height="13" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+        <rect x="20" y="33" width="5" height="18" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+        <rect x="27" y="33" width="5" height="18" rx="2.5" fill="#7c9eff" opacity="0.85"/>
+        <ellipse cx="54" cy="9" rx="6" ry="6" fill="#f472b6" opacity="0.85"/>
+        <path d="M46 17 Q54 14 62 17 L64 34 H44 Z" fill="#f472b6" opacity="0.85"/>
+        <rect x="42" y="17" width="4" height="12" rx="2" fill="#f472b6" opacity="0.85"/>
+        <rect x="62" y="17" width="4" height="12" rx="2" fill="#f472b6" opacity="0.85"/>
+        <rect x="48" y="33" width="5" height="18" rx="2.5" fill="#f472b6" opacity="0.85"/>
+        <rect x="55" y="33" width="5" height="18" rx="2.5" fill="#f472b6" opacity="0.85"/>
+        <line x1="8" y1="2" x2="72" y2="2" stroke="#7c9eff" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6"/>
+      </svg>
+      <h1 style="font-family:'Playfair Display',serif;font-size:26px;color:#e0e0ff;margin:8px 0 0;letter-spacing:-0.5px">How Tall Are They?</h1>
+    </div>
+
+    <!-- Search -->
+    <div style="position:relative;margin-bottom:12px">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#4444aa;font-size:16px;pointer-events:none">🔍</span>
+      <input id="searchInput" value="${escHtml(state.search)}" placeholder="Search 500 celebrities…"
+        style="background:#13132a;border:1px solid #2d2d55;border-radius:8px;color:#e0e0ff;padding:8px 36px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;box-sizing:border-box"/>
+      ${state.search ? `<span onclick="clearSearch()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#4444aa;cursor:pointer;font-size:20px">×</span>` : ''}
+    </div>
+
+    <!-- Tabs + controls -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+      ${['all','favorites','shorter'].map(t => `
+        <button onclick="setTab('${t}')" style="flex:1;padding:8px 4px;border-radius:10px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;white-space:nowrap;
+          background:${state.tab===t ? (t==='shorter'?'#f472b6':t==='favorites'?'#f59e0b':'#7c9eff') : '#1a1a35'};
+          color:${state.tab===t?'#fff':'#5555aa'}">
+          ${t==='all'?'All':t==='favorites'?'★ Favs':'Shorter than Heidi'}
+        </button>`).join('')}
+      <button onclick="toggleSort()" title="Toggle sort"
+        style="padding:8px 10px;border-radius:10px;border:1px solid #2d2d55;background:#1a1a35;color:#7c9eff;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">
+        ${state.sortDir==='desc'?'↓':'↑'}
+      </button>
+      <button onclick="toggleAdd()" style="padding:8px 14px;border-radius:10px;border:none;flex-shrink:0;
+        background:${state.showAdd?'#333':'linear-gradient(135deg,#7c9eff,#a78bfa)'};
+        color:#fff;cursor:pointer;font-weight:600;font-size:12px;font-family:'DM Sans',sans-serif;white-space:nowrap">
+        ${state.showAdd?'✕ Cancel':'+ Add'}
+      </button>
+    </div>
+
+    <!-- Add Form -->
+    ${state.showAdd ? `
+    <div style="background:#12122a;border:1px solid #2d2d55;border-radius:14px;padding:16px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px">
+      <p style="color:#7c9eff;font-weight:600;margin:0;font-size:14px">Add a Celebrity</p>
+      <div style="display:flex;gap:8px">
+        <input id="newName" value="${escHtml(state.newName)}" placeholder="Celebrity name"
+          style="background:#13132a;border:1px solid #2d2d55;border-radius:8px;color:#e0e0ff;padding:8px 12px;font-size:14px;flex:1;font-family:'DM Sans',sans-serif;box-sizing:border-box"/>
+        <button onclick="doLookup()" ${!state.newName.trim()||state.lookSt==='loading'?'disabled':''} style="padding:8px 14px;border-radius:8px;border:none;flex-shrink:0;cursor:${!state.newName.trim()?'default':'pointer'};
+          font-weight:600;font-size:13px;font-family:'DM Sans',sans-serif;white-space:nowrap;display:flex;align-items:center;gap:6px;
+          background:${!state.newName.trim()?'#1e1e3a':'linear-gradient(135deg,#06b6d4,#3b82f6)'};
+          color:${!state.newName.trim()?'#3a3a6a':'#fff'}">
+          ${state.lookSt==='loading'
+            ?'<span style="display:inline-block;width:12px;height:12px;border:2px solid #ffffff44;border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite"></span> Looking…'
+            :'🔎 Look Up'}
+        </button>
+      </div>
+      ${state.lookSt==='success'?`<div style="background:#0f2a1a;border:1px solid #34d39944;border-radius:8px;padding:8px 12px;color:#6ee7b7;font-size:13px">✓ ${escHtml(state.lookMsg)}</div>`:''}
+      ${state.lookSt==='error'?`<div style="background:#2a1a1a;border:1px solid #f8717144;border-radius:8px;padding:8px 12px;color:#f87171;font-size:13px">✗ ${escHtml(state.lookMsg)}</div>`:''}
+      <div style="display:flex;gap:8px">
+        <input id="newFeet" value="${escHtml(state.newFeet)}" placeholder="Feet" type="number" min="3" max="8"
+          style="background:#13132a;border:1px solid #2d2d55;border-radius:8px;color:#e0e0ff;padding:8px 12px;font-size:14px;flex:1;font-family:'DM Sans',sans-serif;box-sizing:border-box"/>
+        <input id="newInches" value="${escHtml(state.newInches)}" placeholder="Inches" type="number" min="0" max="11" step="1"
+          style="background:#13132a;border:1px solid #2d2d55;border-radius:8px;color:#e0e0ff;padding:8px 12px;font-size:14px;flex:1;font-family:'DM Sans',sans-serif;box-sizing:border-box"/>
+      </div>
+      <input id="newBio" value="${escHtml(state.newBio)}" placeholder="Brief description…"
+        style="background:#13132a;border:1px solid #2d2d55;border-radius:8px;color:#e0e0ff;padding:8px 12px;font-size:14px;width:100%;font-family:'DM Sans',sans-serif;box-sizing:border-box"/>
+      <button onclick="doAdd()" ${!state.newName.trim()?'disabled':''} style="
+        background:${!state.newName.trim()?'#1e1e3a':'linear-gradient(135deg,#7c9eff,#a78bfa)'};
+        border:none;border-radius:8px;padding:10px;
+        color:${!state.newName.trim()?'#3a3a6a':'#fff'};
+        font-weight:600;font-size:14px;cursor:${!state.newName.trim()?'default':'pointer'};
+        font-family:'DM Sans',sans-serif">Add to Board</button>
+    </div>` : ''}
+
+    <!-- Heidi line -->
+    ${state.tab==='all' && !state.search ? `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;opacity:0.7">
+      <div style="flex:1;height:1px;background:repeating-linear-gradient(90deg,#f472b6 0,#f472b6 6px,transparent 6px,transparent 12px)"></div>
+      <span style="font-size:11px;color:#f472b6;white-space:nowrap;font-weight:600">Heidi — 5′ 10.5″</span>
+      <div style="flex:1;height:1px;background:repeating-linear-gradient(90deg,#f472b6 0,#f472b6 6px,transparent 6px,transparent 12px)"></div>
+    </div>` : ''}
+
+    <!-- Count -->
+    <div style="color:#444488;font-size:12px;margin-bottom:10px;text-align:right">
+      ${filtered.length} of ${state.celebs.length}
+      ${state.tab==='shorter'?'<span style="color:#f472b6;margin-left:6px">• Shorter than Heidi</span>':''}
+      ${state.tab==='favorites'?'<span style="color:#f59e0b;margin-left:6px">• Favorites</span>':''}
+    </div>
+
+    <!-- List -->
+    <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:32px">
+      ${filtered.length === 0 ? emptyState() : filtered.map((c, idx) => celebCard(c, idx)).join('')}
+    </div>
+  </div>`;
+
+  // Build ruler
+  buildRuler();
+
+  // Bind search input live
+  const si = document.getElementById('searchInput');
+  if (si) si.addEventListener('input', e => { state.search = e.target.value; render(); });
+
+  // Bind add form inputs (preserve focus)
+  bindAddInputs();
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildRuler() {
+  const ruler = document.getElementById('ruler');
+  if (!ruler) return;
+  let html = '';
+  for (let i = 0; i < 120; i++) {
+    const w = i%4===0?18:i%2===0?12:7;
+    const col = i%4===0?'#7c9eff':'#3a3a6a';
+    html += `<div style="display:flex;align-items:center;width:100%;justify-content:flex-end;height:10px;padding-right:3px;position:relative">
+      <div style="background:${col};height:1px;width:${w}px"></div>
+      ${i%4===0?`<span style="font-size:7px;color:#7c9eff;position:absolute;left:2px;font-family:monospace;line-height:1;user-select:none">${i/4}</span>`:''}
+    </div>`;
+  }
+  ruler.innerHTML = html;
+}
+
+function celebCard(c, idx) {
+  const above = c.height > HEIDI;
+  const isFav = state.favorites.has(c.id);
+  const isDel = state.confirmDel === c.id;
+  const pct = Math.max(5, (c.height/84)*100);
+  const barColor = above ? 'linear-gradient(90deg,#7c9eff,#a78bfa)' : 'linear-gradient(90deg,#f472b6,#fb923c)';
+  return `
+  <div class="card" style="background:${isFav?'#16142e':'#12122a'};border-radius:12px;padding:12px 10px 12px 14px;
+    border:1px solid ${isFav?'#f59e0b44':above?'#2a2a55':'#2a1a35'};
+    display:flex;align-items:center;gap:10px;transition:transform .15s,box-shadow .15s"
+    onmouseenter="this.style.transform='translateX(3px)';this.style.boxShadow='0 2px 20px #0006'"
+    onmouseleave="this.style.transform='none';this.style.boxShadow='none'">
+
+    <div style="width:30px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;
+      background:${idx<3?'linear-gradient(135deg,#7c9eff,#a78bfa)':'#1a1a38'};
+      color:${idx<3?'#fff':'#4444aa'}">#${idx+1}</div>
+
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="color:#e0e0ff;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.name)}</span>
+        <span style="color:${above?'#7c9eff':'#f472b6'};font-weight:700;font-size:13px;flex-shrink:0;margin-left:8px">${fmtH(c.height)}</span>
+      </div>
+      <div style="color:#555588;font-size:11px;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(c.bio)}</div>
+      <div style="width:100%;height:4px;background:#1e1e3a;border-radius:2px;margin-top:6px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+      <button onclick="toggleFav(${c.id})"
+        onmouseenter="this.style.color='${isFav?'#fbbf24':'#7c9eff'}'"
+        onmouseleave="this.style.color='${isFav?'#f59e0b':'#2d2d55'}'"
+        style="background:none;border:none;cursor:pointer;font-size:20px;line-height:1;padding:3px 5px;border-radius:6px;
+          color:${isFav?'#f59e0b':'#2d2d55'};transition:color .2s">★</button>
+      ${isDel ? `
+        <div style="display:flex;gap:2px">
+          <button onclick="confirmDel(${c.id})" style="background:#3a1a1a;border:1px solid #f8717144;border-radius:6px;color:#f87171;cursor:pointer;font-size:11px;font-weight:700;padding:3px 6px;font-family:'DM Sans',sans-serif">✓</button>
+          <button onclick="cancelDel()" style="background:#1e1e38;border:1px solid #2d2d55;border-radius:6px;color:#888;cursor:pointer;font-size:11px;font-weight:700;padding:3px 6px;font-family:'DM Sans',sans-serif">✕</button>
+        </div>` : `
+        <button onclick="startDel(${c.id})"
+          onmouseenter="this.style.color='#f87171'"
+          onmouseleave="this.style.color='#2d2d55'"
+          style="background:none;border:none;cursor:pointer;font-size:14px;padding:3px 5px;border-radius:6px;color:#2d2d55;line-height:1">🗑</button>`}
+    </div>
+  </div>`;
+}
+
+function emptyState() {
+  if (state.tab === 'favorites') return `<div style="text-align:center;color:#555588;padding:32px 16px;font-size:14px">No favorites yet — tap ★ to save someone!</div>`;
+  if (state.search) return `
+    <div style="text-align:center;color:#555588;padding:32px 16px;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:12px">
+      <span style="font-size:28px">🔍</span>
+      <div><strong style="color:#7c9eff">"${escHtml(state.search)}"</strong> isn't in the list yet.</div>
+      <button onclick="openAdd('${escHtml(state.search).replace(/'/g,"\\'")}')" style="background:linear-gradient(135deg,#7c9eff,#a78bfa);border:none;border-radius:10px;color:#fff;padding:10px 20px;font-weight:600;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">
+        + Add "${escHtml(state.search)}" to the Board
+      </button>
+    </div>`;
+  return `<div style="text-align:center;color:#555588;padding:32px 16px">No results</div>`;
+}
+
+function bindAddInputs() {
+  const fields = ['newName','newFeet','newInches','newBio'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', e => { state[id] = e.target.value; });
+  });
+  const nn = document.getElementById('newName');
+  if (nn) nn.addEventListener('keydown', e => { if (e.key==='Enter') doLookup(); });
+}
+
+// ── Actions ────────────────────────────────────────────────────────────
+function setTab(t)      { setState({ tab: t }); }
+function toggleSort()   { setState({ sortDir: state.sortDir==='desc'?'asc':'desc' }); }
+function clearSearch()  { setState({ search: '' }); }
+function toggleAdd()    {
+  if (state.showAdd) setState({ showAdd: false, lookSt: 'idle', lookMsg: '' });
+  else setState({ showAdd: true, newName:'', newFeet:'', newInches:'', newBio:'', lookSt:'idle', lookMsg:'' });
+}
+function openAdd(name)  { setState({ showAdd: true, newName: name||'', newFeet:'', newInches:'', newBio:'', lookSt:'idle', lookMsg:'' }); }
+function toggleFav(id)  { const f = new Set(state.favorites); f.has(id)?f.delete(id):f.add(id); setState({ favorites: f }); }
+function startDel(id)   { setState({ confirmDel: id }); }
+function cancelDel()    { setState({ confirmDel: null }); }
+function confirmDel(id) {
+  const f = new Set(state.favorites); f.delete(id);
+  setState({ celebs: state.celebs.filter(c=>c.id!==id), favorites: f, confirmDel: null });
+}
+function doAdd() {
+  const name = state.newName.trim();
+  if (!name) return;
+  const h = toIn(parseInt(state.newFeet)||0, parseFloat(state.newInches)||0);
+  const newCeleb = { id: Date.now(), name, height: h, bio: state.newBio.trim()||'Celebrity' };
+  setState({ celebs: [...state.celebs, newCeleb], search:'', tab:'all', showAdd:false, lookSt:'idle', lookMsg:'' });
+}
+async function doLookup() {
+  const name = state.newName.trim();
+  if (!name || state.lookSt==='loading') return;
+  setState({ lookSt:'loading', lookMsg:'' });
+  try {
+    const { feet, inches, bio } = await lookupCelebrity(name);
+    setState({ newFeet: String(feet), newInches: String(inches), newBio: bio||state.newBio, lookSt:'success', lookMsg:'Found! Review and edit if needed.' });
+  } catch(e) {
+    setState({ lookSt:'error', lookMsg: e.message });
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+render();
+</script>
+
+</body>
+</html>
